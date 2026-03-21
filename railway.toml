@@ -1,4 +1,4 @@
 [deploy]
-startCommand = "php artisan migrate --force && frankenphp run --config /etc/caddy/Caddyfile"
+startCommand = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8080"
 healthcheckPath = "/"
 healthcheckTimeout = 300
