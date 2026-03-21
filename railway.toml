@@ -1,0 +1,7 @@
+[deploy]
+startCommand = "php artisan migrate --force && php artisan db:seed --force && frankenphp run --config /etc/caddy/Caddyfile"
+healthcheckPath = "/"
+healthcheckTimeout = 300[deploy]
+startCommand = "php artisan migrate --force && php artisan db:seed --force && frankenphp run --config /etc/caddy/Caddyfile"
+healthcheckPath = "/"
+healthcheckTimeout = 300
