@@ -11,8 +11,9 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::orderBy('username')->get();
-        return view('users.index', compact('users'));
+        $users         = User::orderBy('username')->get();
+        $archivedUsers = User::onlyTrashed()->orderBy('username')->get();
+        return view('users.index', compact('users', 'archivedUsers'));
     }
 
     public function store(Request $request)
@@ -26,6 +27,7 @@ class UserController extends Controller
 
         $user = User::create([
             'username' => $request->username,
+            'email'    => $request->email,
             'role'     => $request->role,
             'password' => Hash::make($request->password),
             'status'   => $request->status,
@@ -45,6 +47,7 @@ class UserController extends Controller
         ]);
 
         $user->username = $request->username;
+        $user->email    = $request->email;
         $user->role     = $request->role;
         $user->status   = $request->status;
 
@@ -62,14 +65,24 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
-            return back()->withErrors(['delete' => 'You cannot delete your own account.']);
+            return back()->withErrors(['delete' => 'You cannot archive your own account.']);
         }
 
         $username = $user->username;
-        $user->delete();
+        $user->delete(); // soft delete — sets deleted_at
 
-        ActivityLog::record('Users', 'Deleted User', "User {$username} deleted.");
+        ActivityLog::record('Users', 'Archived User', "User {$username} archived.");
 
-        return back()->with('success', "User {$username} deleted.");
+        return back()->with('success', "User {$username} archived.");
+    }
+
+    public function restore($id)
+    {
+        $user = User::onlyTrashed()->findOrFail($id);
+        $user->restore();
+
+        ActivityLog::record('Users', 'Restored User', "User {$user->username} restored.");
+
+        return back()->with('success', "User {$user->username} restored successfully.");
     }
 }

@@ -13,7 +13,8 @@
 
   @stack('styles')
 </head>
-<body>
+<body class="theme-{{ auth()->user()->theme ?? 'default' }} lang-{{ auth()->user()->language ?? 'en' }}">
+
 <div class="container">
 
   {{-- SIDEBAR --}}
@@ -78,21 +79,28 @@
       </div>
       <div class="header-right">
         <div class="search-profile">
-     <form action="{{ route('search') }}" method="GET" style="display:inline;position:relative;">
-  <input type="text" name="q" class="search-bar" placeholder="Search..."
-    value="{{ request('q') }}"
-    onkeypress="if(event.key==='Enter'){this.form.submit()}"
-    style="padding-right:2.5rem;" />
-  <button type="submit" style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;">
-    <i class="fas fa-search"></i>
-  </button>
-</form>
+
+          {{-- Only show header search on Dashboard --}}
+          @if(request()->routeIs('dashboard'))
+          <form action="{{ route('search') }}" method="GET" style="display:inline;position:relative;">
+            <input type="text" name="q" class="search-bar" placeholder="Search..."
+              value="{{ request('q') }}"
+              onkeypress="if(event.key==='Enter'){this.form.submit()}"
+              style="padding-right:2.5rem;" />
+            <button type="submit" style="position:absolute;right:0.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;">
+              <i class="fas fa-search"></i>
+            </button>
+          </form>
+          @endif
+
           <div class="admin-menu">
             <div class="admin-trigger" id="adminTrigger">
               @if(auth()->user()->profile_picture)
-                <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}" alt="Avatar">
+                <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}" alt="Avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
               @else
-                <img src="https://i.pravatar.cc/100?u={{ auth()->user()->id }}" alt="Avatar">
+                <div style="width:32px;height:32px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;">
+                  <i class="fas fa-user" style="color:#aaa;font-size:.9rem;"></i>
+                </div>
               @endif
               <span>{{ auth()->user()->username }}</span>
               <i class="fas fa-chevron-down"></i>
@@ -144,40 +152,45 @@
 
 {{-- ACCOUNT SETTINGS MODAL --}}
 <div id="accountSettingsModal" class="modal">
-  <div class="modal-content account-settings-modal">
+  <div class="modal-content account-settings-modal" style="max-height:90vh;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;">
+    <style>.account-settings-modal::-webkit-scrollbar{display:none;}</style>
+
     <h2><i class="fas fa-user-cog"></i> Account Settings</h2>
+
+    {{-- Profile picture section (outside form, just for display) --}}
     <div class="profile-section">
       <div class="profile-picture-wrapper">
         @if(auth()->user()->profile_picture)
           <img id="profilePreview" src="{{ asset('storage/' . auth()->user()->profile_picture) }}" class="profile-picture">
         @else
-          <img id="profilePreview" src="https://i.pravatar.cc/150?u={{ auth()->user()->id }}" class="profile-picture">
+          <div id="profilePlaceholder" style="width:100px;height:100px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+            <i class="fas fa-user" style="font-size:2.8rem;color:#bbb;margin-top:.8rem;"></i>
+          </div>
+          <img id="profilePreview" src="" class="profile-picture" style="display:none;">
         @endif
         <label for="profilePictureInput" class="profile-camera-btn"><i class="fas fa-camera"></i></label>
-        <input type="file" id="profilePictureInput" accept="image/*" class="profile-input-hidden">
       </div>
       <h3 class="profile-username">{{ auth()->user()->username }}</h3>
       <p class="profile-role">{{ ucfirst(auth()->user()->role) }}</p>
     </div>
 
+    {{-- Form --}}
     <form action="{{ route('account.update') }}" method="POST" enctype="multipart/form-data" class="form-grid">
       @csrf
+
+      {{-- Hidden file input inside form so it gets submitted --}}
+      <input type="file" id="profilePictureInput" name="profile_picture" accept="image/*" class="profile-input-hidden">
+
       <div class="form-group">
         <label><i class="fas fa-user"></i> Username</label>
         <input type="text" name="username" value="{{ auth()->user()->username }}" required />
       </div>
+
       <div class="form-group">
         <label><i class="fas fa-envelope"></i> Email Address</label>
         <input type="email" name="email" value="{{ auth()->user()->email }}" />
       </div>
-      <div class="form-group">
-        <label><i class="fas fa-lock"></i> Current Password</label>
-        <input type="password" name="current_password" placeholder="Required to change password" />
-      </div>
-      <div class="form-group">
-        <label><i class="fas fa-key"></i> New Password</label>
-        <input type="password" name="new_password" placeholder="Leave blank to keep current" />
-      </div>
+
       <div class="form-group">
         <label><i class="fas fa-palette"></i> Theme</label>
         <select name="theme">
@@ -186,28 +199,15 @@
           <option value="dark"    {{ auth()->user()->theme === 'dark'    ? 'selected' : '' }}>Dark Mode</option>
         </select>
       </div>
+
       <div class="form-group">
         <label><i class="fas fa-globe"></i> Language</label>
         <select name="language">
           <option value="en" {{ auth()->user()->language === 'en' ? 'selected' : '' }}>English</option>
-          <option value="tl" {{ auth()->user()->language === 'tl' ? 'selected' : '' }}>Tagalog</option>
-          <option value="es" {{ auth()->user()->language === 'es' ? 'selected' : '' }}>Español</option>
+          <option value="it" {{ auth()->user()->language === 'it' ? 'selected' : '' }}>Italian</option>
         </select>
       </div>
-      <div class="form-group form-group-full">
-        <label class="checkbox-label">
-          <input type="checkbox" name="notifications_enabled" class="checkbox-input"
-            {{ auth()->user()->notifications_enabled ? 'checked' : '' }}>
-          <span><i class="fas fa-bell"></i> Enable Email Notifications</span>
-        </label>
-      </div>
-      <div class="form-group form-group-full">
-        <label class="checkbox-label">
-          <input type="checkbox" name="two_factor_enabled" class="checkbox-input"
-            {{ auth()->user()->two_factor_enabled ? 'checked' : '' }}>
-          <span><i class="fas fa-shield-alt"></i> Enable Two-Factor Authentication</span>
-        </label>
-      </div>
+
       <div class="modal-buttons">
         <button type="button" id="closeAccountSettings" class="btn-cancel">
           <i class="fas fa-times"></i> Cancel
@@ -220,52 +220,44 @@
   </div>
 </div>
 
+{{-- dashboard.js handles all modals, dropdowns, and alerts --}}
 <script src="{{ asset('assets/js/dashboard.js') }}"></script>
-@stack('scripts')
 
+{{-- Profile picture preview --}}
 <script>
-// Profile picture preview
 document.getElementById('profilePictureInput')?.addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onload = e => document.getElementById('profilePreview').src = e.target.result;
+    reader.onload = function(e) {
+      const preview = document.getElementById('profilePreview');
+      const placeholder = document.getElementById('profilePlaceholder');
+      if (preview) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      }
+      if (placeholder) placeholder.style.display = 'none';
+    };
     reader.readAsDataURL(file);
   }
 });
-
-// Modal helpers
-const openModal  = (m) => { m?.classList.add('active'); document.body.classList.add('modal-open'); };
-const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
-
-// Dropdown
-document.getElementById('adminTrigger')?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  document.getElementById('profileDropdown')?.classList.toggle('show');
-});
-document.addEventListener('click', () => document.getElementById('profileDropdown')?.classList.remove('show'));
-
-// Logout modal
-document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  openModal(document.getElementById('logoutModal'));
-  document.getElementById('profileDropdown')?.classList.remove('show');
-});
-document.getElementById('cancelLogout')?.addEventListener('click', () =>
-  closeModal(document.getElementById('logoutModal')));
-
-// Account Settings modal
-document.getElementById('accountSettingsBtn')?.addEventListener('click', () => {
-  openModal(document.getElementById('accountSettingsModal'));
-  document.getElementById('profileDropdown')?.classList.remove('show');
-});
-document.getElementById('closeAccountSettings')?.addEventListener('click', () =>
-  closeModal(document.getElementById('accountSettingsModal')));
-
-// Auto-hide flash alerts
-document.querySelectorAll('.floating-alert.show').forEach(el => {
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3300);
-});
 </script>
+
+{{-- Page transition --}}
+<script>
+  document.querySelectorAll('.sidebar nav ul li a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      const href = this.href;
+      if (href && !href.includes('#') && href !== window.location.href) {
+        e.preventDefault();
+        document.body.classList.add('page-transitioning');
+        setTimeout(() => { window.location.href = href; }, 200);
+      }
+    });
+  });
+</script>
+
+@stack('scripts')
+
 </body>
 </html>

@@ -62,7 +62,8 @@ class DashboardController extends Controller
 
     ActivityLog::record('Search', 'Searched', "Searched for: {$q}");
 
-    return view('search.results', compact('q', 'inventory', 'production', 'batches'));
+    return view('search.index', compact('q', 'inventory', 'production', 'batches'));
 }
 
 }
+    

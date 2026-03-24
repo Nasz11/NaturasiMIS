@@ -8,9 +8,10 @@
   <div class="module-header">
     <h2><i class="fas fa-industry"></i> Production Batches</h2>
     <div class="actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="Search by batch number or type..." class="input-search" id="batchSearch" />
+      <div class="search-wrapper" style="display:flex;align-items:center;gap:.5rem;border:1px solid #ccc;border-radius:8px;padding:.4rem .8rem;background:#fff;">
+        <i class="fas fa-search" style="color:#888;"></i>
+        <input type="text" placeholder="Search by batch number or type..." class="input-search"
+          id="batchSearch" style="border:none;outline:none;font-size:.95rem;width:240px;" />
       </div>
       @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
       <button class="btn-primary production-add-btn" id="openAddBatch">
@@ -28,14 +29,14 @@
           <th>Production Date</th><th>Status</th><th>Remarks</th><th>Staff</th><th>Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="productionTableBody">
         @forelse($batches as $batch)
         <tr>
           <td>{{ $batch->batch_number }}</td>
-         <td>{{ $batch->product_type }}</td>
+          <td>{{ $batch->product_type }}</td>
           <td>{{ $batch->quantity }} kg</td>
           <td>{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}</td>
-          <td><span class="status-tag {{ $batch->status === 'Completed' ? 'inactive' : 'active' }}">{{ $batch->status }}</span></td>
+          <td><span class="status-tag {{ $batch->status === 'Completed' ? 'inactive' : 'active' }}">{{ strtoupper($batch->status) }}</span></td>
           <td>{{ $batch->remarks ?? 'N/A' }}</td>
           <td>{{ $batch->staff->username ?? 'N/A' }}</td>
           <td class="actions-col">
@@ -45,9 +46,9 @@
               data-batch="{{ $batch->batch_number }}"
               data-type="{{ $batch->product_type }}"
               data-qty="{{ $batch->quantity }}"
-              data-date="{{ $batch->production_date }}"
+              data-date="{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}"
               data-status="{{ $batch->status }}"
-              data-remarks="{{ $batch->remarks }}">
+              data-remarks="{{ $batch->remarks ?? '' }}">
               <i class="fas fa-pen"></i>
             </button>
             <form action="{{ route('production.destroy', $batch) }}" method="POST" class="d-inline delete-form">
@@ -58,7 +59,7 @@
           </td>
         </tr>
         @empty
-        <tr><td colspan="8" style="text-align:center; padding: 2rem; color: #888;">No production batches yet. Click "Add New Batch" to get started.</td></tr>
+        <tr id="emptyRow"><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No production batches yet. Click "Add New Batch" to get started.</td></tr>
         @endforelse
       </tbody>
     </table>
@@ -77,16 +78,16 @@
       </div>
       <div class="form-group">
         <label for="productType">Product / Cheese Type</label>
-       <select name="product_type" id="productType" required>
+        <select name="product_type" id="productType" required>
           <option value="">Select cheese type</option>
-          @foreach(['Mozzarella Cheese','Cheddar Cheese','Parmesan Cheese','Gouda Cheese','Swiss Cheese','Brie Cheese','Blue Cheese','Feta Cheese','Cream Cheese','Ricotta Cheese'] as $t)
+          @foreach(['Burrata','Stracciatella','Cherry Mozzarella','Traditional Mozzarella','Provola','Mozzarella di Latte'] as $t)
             <option value="{{ $t }}">{{ $t }}</option>
           @endforeach
         </select>
       </div>
       <div class="form-group">
         <label for="batchQuantity">Quantity Produced (kg)</label>
-        <input type="number" name="quantity" id="batchQuantity" placeholder="e.g., 100" required />
+        <input type="number" name="quantity" id="batchQuantity" step="0.01" min="0.01" placeholder="e.g., 100" required />
       </div>
       <div class="form-group">
         <label for="productionDate">Production Date</label>
@@ -124,15 +125,15 @@
       </div>
       <div class="form-group">
         <label>Product / Cheese Type</label>
-       <select name="product_type" id="editCheeseType" required>
-          @foreach(['Mozzarella Cheese','Cheddar Cheese','Parmesan Cheese','Gouda Cheese','Swiss Cheese','Brie Cheese','Blue Cheese','Feta Cheese','Cream Cheese','Ricotta Cheese'] as $t)
+        <select name="product_type" id="editCheeseType" required>
+          @foreach(['Burrata','Stracciatella','Cherry Mozzarella','Traditional Mozzarella','Provola','Mozzarella di Latte'] as $t)
             <option value="{{ $t }}">{{ $t }}</option>
           @endforeach
         </select>
       </div>
       <div class="form-group">
         <label>Quantity (kg)</label>
-        <input type="number" name="quantity" id="editQuantity" required />
+        <input type="number" name="quantity" id="editQuantity" step="0.01" required />
       </div>
       <div class="form-group">
         <label>Production Date</label>
@@ -169,16 +170,17 @@
     </div>
   </div>
 </div>
+
 @endsection
 
 @push('scripts')
 <script>
-const openModal  = (m) => { m?.classList.add('active'); document.body.classList.add('modal-open'); };
-const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
 
+// Add modal
 document.getElementById('openAddBatch')?.addEventListener('click', () => openModal(document.getElementById('addBatchModal')));
 document.getElementById('closeAddBatch')?.addEventListener('click', () => closeModal(document.getElementById('addBatchModal')));
 
+// Edit modal
 document.querySelectorAll('.edit-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.getElementById('editBatchForm').action = `/production/${btn.dataset.id}`;
@@ -193,6 +195,7 @@ document.querySelectorAll('.edit-btn').forEach(btn => {
 });
 document.getElementById('closeEditBatch')?.addEventListener('click', () => closeModal(document.getElementById('editBatchModal')));
 
+// Delete modal
 let pendingDeleteForm = null;
 document.querySelectorAll('.delete-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -203,11 +206,14 @@ document.querySelectorAll('.delete-btn').forEach(btn => {
 document.getElementById('confirmDeleteBatch')?.addEventListener('click', () => pendingDeleteForm?.submit());
 document.getElementById('cancelDeleteBatch')?.addEventListener('click', () => closeModal(document.getElementById('deleteBatchModal')));
 
-document.getElementById('batchSearch')?.addEventListener('input', function() {
+// Search
+document.getElementById('batchSearch')?.addEventListener('input', function () {
   const q = this.value.toLowerCase();
-  document.querySelectorAll('#productionTable tbody tr').forEach(row => {
+  document.querySelectorAll('#productionTableBody tr').forEach(row => {
+    if (row.id === 'emptyRow') return;
     row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 });
+
 </script>
 @endpush

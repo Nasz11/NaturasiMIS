@@ -18,17 +18,6 @@
   </div>
   @endif
 
-  {{-- ACCOUNT SETTINGS --}}
-  <div class="chart-card" style="margin-bottom: 2rem;">
-    <h2><i class="fas fa-user-cog"></i> Account Settings</h2>
-    <p>Update your account credentials or preferences.</p>
-    <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-      <button class="btn-primary" id="changePasswordBtn">
-        <i class="fas fa-key"></i> Change Password
-      </button>
-    </div>
-  </div>
-
   {{-- SYSTEM PREFERENCES --}}
   @if(auth()->user()->role === 'admin')
   <div class="chart-card system-config-btn" style="margin-bottom: 2rem;">
@@ -60,32 +49,6 @@
   @endif
 </section>
 
-{{-- CHANGE PASSWORD MODAL --}}
-<div id="changePasswordModal" class="modal">
-  <div class="modal-content">
-    <h2>Change Password</h2>
-    <form action="{{ route('settings.password') }}" method="POST" class="form-grid">
-      @csrf
-      <div class="form-group">
-        <label>Current Password</label>
-        <input type="password" name="current_password" id="currentPassword" required />
-      </div>
-      <div class="form-group">
-        <label>New Password</label>
-        <input type="password" name="new_password" id="newPassword" required />
-      </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" name="new_password_confirmation" id="confirmPassword" required />
-      </div>
-      <div class="modal-buttons">
-        <button type="button" id="closePasswordModal" class="btn-cancel">Cancel</button>
-        <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 {{-- EDIT SYSTEM INFO MODAL --}}
 <div id="editSystemInfoModal" class="modal">
   <div class="modal-content">
@@ -94,11 +57,11 @@
       @csrf
       <div class="form-group">
         <label>Company Name</label>
-       <input type="text" name="company_name" value="{{ $settings->company_name }}" required />
+        <input type="text" name="company_name" value="{{ $settings->company_name }}" required />
       </div>
       <div class="form-group" style="grid-column: span 2;">
         <label>Company Description</label>
-       <textarea name="company_description" rows="3" style="width:100%;padding:0.8rem;border-radius:8px;border:1px solid #ccc;">{{ $settings->company_description }}</textarea>
+        <textarea name="company_description" rows="3" style="width:100%;padding:0.8rem;border-radius:8px;border:1px solid #ccc;">{{ $settings->company_description }}</textarea>
       </div>
       <div class="modal-buttons">
         <button type="button" id="closeEditSystem" class="btn-cancel">Cancel</button>
@@ -114,8 +77,6 @@
 const openModal  = (m) => { m?.classList.add('active'); document.body.classList.add('modal-open'); };
 const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
 
-document.getElementById('changePasswordBtn')?.addEventListener('click', () => openModal(document.getElementById('changePasswordModal')));
-document.getElementById('closePasswordModal')?.addEventListener('click', () => closeModal(document.getElementById('changePasswordModal')));
 document.getElementById('editSystemInfoBtn')?.addEventListener('click', () => openModal(document.getElementById('editSystemInfoModal')));
 document.getElementById('closeEditSystem')?.addEventListener('click', () => closeModal(document.getElementById('editSystemInfoModal')));
 </script>

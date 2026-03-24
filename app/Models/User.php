@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
 
     protected $fillable = [
         'username', 'email', 'password', 'role', 'status',
@@ -28,7 +29,7 @@ class User extends Authenticatable
     public function isProduction(): bool { return $this->role === 'production'; }
     public function isManager(): bool    { return $this->role === 'manager'; }
 
-    // Permissions map (mirrors your frontend RBAC)
+    // Permissions map
     public function permissions(): array
     {
         $map = [

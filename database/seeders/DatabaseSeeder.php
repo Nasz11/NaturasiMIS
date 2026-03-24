@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── USERS ──────────────────────────────────────
+        // ── USERS ──────────────────────────────────────────────
         $admin = User::create([
             'username' => 'admin',
             'password' => Hash::make('1234'),
@@ -44,26 +44,44 @@ class DatabaseSeeder extends Seeder
             'status'   => 'Active',
         ]);
 
-        // ── SYSTEM SETTINGS ────────────────────────────
+        // ── SYSTEM SETTINGS ────────────────────────────────────
         SystemSetting::create([
             'company_name'        => 'Naturasi Cheese Co.',
             'company_description' => 'Premium cheese manufacturing since 2020.',
             'theme'               => 'default',
         ]);
 
-        // ── INVENTORY ──────────────────────────────────
-        $inventoryData = [
-            ['Mozzarella Cheese', 'Cheese Product', 120, 'kg', 50],
-            ['Cheddar Cheese',    'Cheese Product', 20,  'kg', 40],
-            ['Fresh Milk',        'Raw Materials',  500, 'L',  100],
-            ['Rennet',            'Ingredients',    5,   'kg', 2],
-            ['Salt',              'Ingredients',    30,  'kg', 10],
-            ['Cheese Cultures',   'Ingredients',    2,   'kg', 1],
-            ['Packaging Boxes',   'Packaging',      200, 'pcs', 50],
-            ['Vacuum Bags',       'Packaging',      15,  'pcs', 30],
+        // ── INVENTORY — FINISHED PRODUCTS ─────────────────────
+        $products = [
+            ['Burrata',                  'Cheese Product', 0, 'kg',  20],
+            ['Stracciatella',            'Cheese Product', 0, 'kg',  20],
+            ['Cherry Mozzarella',        'Cheese Product', 0, 'kg',  20],
+            ['Traditional Mozzarella',   'Cheese Product', 0, 'kg',  20],
+            ['Provola',                  'Cheese Product', 0, 'kg',  20],
+            ['Mozzarella di Latte',      'Cheese Product', 0, 'kg',  20],
         ];
 
-        foreach ($inventoryData as [$name, $cat, $qty, $unit, $reorder]) {
+        // ── INVENTORY — RAW MATERIALS ──────────────────────────
+        $rawMaterials = [
+            ['Cagliata',         'Raw Materials', 0, 'kg', 10],
+            ['Fresh Milk',       'Raw Materials', 0, 'L',  100],
+            ['Cream',            'Raw Materials', 0, 'L',  20],
+            ['Iodized Salt',     'Raw Materials', 0, 'kg', 10],
+            ['Rock Salt',        'Raw Materials', 0, 'kg', 10],
+            ['Trisodium',        'Raw Materials', 0, 'kg', 5],
+            ['Rennet',           'Raw Materials', 0, 'kg', 2],
+            ['Citric Acid',      'Raw Materials', 0, 'kg', 5],
+            ['Palm Oil',         'Raw Materials', 0, 'L',  10],
+            ['Skimmed Milk',     'Raw Materials', 0, 'L',  50],
+            ['High Melt Starch', 'Raw Materials', 0, 'kg', 5],
+            ['Butter Flavor',    'Raw Materials', 0, 'kg', 2],
+            ['Butter Milk',      'Raw Materials', 0, 'L',  20],
+            ['Parmesan Flavor',  'Raw Materials', 0, 'kg', 2],
+            ['Cheddar Flavor',   'Raw Materials', 0, 'kg', 2],
+            ['Milk Powder',      'Raw Materials', 0, 'kg', 10],
+        ];
+
+        foreach (array_merge($products, $rawMaterials) as [$name, $cat, $qty, $unit, $reorder]) {
             InventoryItem::create([
                 'product_name'  => $name,
                 'category'      => $cat,
@@ -74,48 +92,48 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // ── PRODUCTION BATCHES ─────────────────────────
+        // ── PRODUCTION BATCHES ─────────────────────────────────
         ProductionBatch::create([
-            'batch_number'    => 'B-2025-001',
-            'product_type'    => 'Mozzarella Cheese',
-            'quantity'        => 80,
-            'production_date' => now()->subDays(5),
+            'batch_number'    => 'B-2026-001',
+            'product_type'    => 'Burrata',
+            'quantity'        => 50,
+            'production_date' => now()->subDays(3),
             'status'          => 'In Production',
-            'remarks'         => 'Batch started this morning.',
+            'remarks'         => 'Initial batch.',
             'staff_id'        => $production->id,
         ]);
 
         ProductionBatch::create([
-            'batch_number'    => 'B-2025-002',
-            'product_type'    => 'Cheddar Cheese',
-            'quantity'        => 120,
-            'production_date' => now()->subDays(11),
+            'batch_number'    => 'B-2026-002',
+            'product_type'    => 'Traditional Mozzarella',
+            'quantity'        => 80,
+            'production_date' => now()->subDays(7),
             'status'          => 'Completed',
-            'remarks'         => 'Batch curing completed.',
+            'remarks'         => 'Batch completed successfully.',
             'staff_id'        => $production->id,
         ]);
 
-        // ── BATCHES ────────────────────────────────────
+        // ── BATCHES ────────────────────────────────────────────
         Batch::create([
-            'batch_id'        => 'B-2025-001',
-            'cheese_type'     => 'Mozzarella',
-            'quantity'        => 80,
-            'start_date'      => now()->subDays(5),
+            'batch_id'        => 'B-2026-001',
+            'cheese_type'     => 'Burrata',
+            'quantity'        => 50,
+            'start_date'      => now()->subDays(3),
             'completion_date' => now()->addDays(2),
             'status'          => 'In Production',
             'staff_id'        => $production->id,
-            'remarks'         => 'Batch started this morning.',
+            'remarks'         => 'Initial batch.',
         ]);
 
         Batch::create([
-            'batch_id'        => 'B-2025-002',
-            'cheese_type'     => 'Cheddar',
-            'quantity'        => 120,
-            'start_date'      => now()->subDays(11),
-            'completion_date' => now()->subDays(3),
+            'batch_id'        => 'B-2026-002',
+            'cheese_type'     => 'Traditional Mozzarella',
+            'quantity'        => 80,
+            'start_date'      => now()->subDays(7),
+            'completion_date' => now()->subDays(1),
             'status'          => 'Completed',
             'staff_id'        => $production->id,
-            'remarks'         => 'Batch curing completed.',
+            'remarks'         => 'Batch completed successfully.',
         ]);
     }
 }

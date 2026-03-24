@@ -12,11 +12,11 @@ use Illuminate\Http\Request;
 class BatchController extends Controller
 {
     public function index()
-    {
-        $batches = Batch::with('staff')->orderByDesc('start_date')->get();
-       $staffList = User::where('status', 'Active')->get();
-return view('batches.index', compact('batches', 'staffList'));
-    }
+{
+    $batches = Batch::with('staff')->orderByDesc('start_date')->get();
+    $staff   = User::all();
+    return view('batches.index', compact('batches', 'staff'));
+}
 
     public function store(Request $request)
     {
