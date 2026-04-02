@@ -78,4 +78,27 @@ class SettingsController extends Controller
 
         return back()->with('error', 'Backup failed. Please try again.');
     }
+    public function restore(Request $request)
+{
+    $request->validate([
+        'backup_file' => 'required|file|mimes:sql,txt',
+    ]);
+
+    $file    = $request->file('backup_file');
+    $dbName  = env('DB_DATABASE');
+    $dbUser  = env('DB_USERNAME');
+    $dbPass  = env('DB_PASSWORD');
+    $dbHost  = env('DB_HOST');
+    $path    = $file->getPathname();
+
+    $command = "mysql --user={$dbUser} --password={$dbPass} --host={$dbHost} {$dbName} < \"{$path}\"";
+    exec($command, $output, $returnCode);
+
+    if ($returnCode === 0) {
+        ActivityLog::record('Settings', 'Restored Backup', 'Database restored from backup file.');
+        return back()->with('success', 'Database restored successfully.');
+    }
+
+    return back()->with('error', 'Restore failed. Please check your backup file.');
+}
 }   

@@ -40,7 +40,7 @@ class User extends Authenticatable
             ],
             'inventory' => ['accessDashboard', 'manageInventory', 'viewReports'],
             'production' => ['accessDashboard', 'manageProduction', 'manageBatches', 'viewReports'],
-            'manager'  => ['accessDashboard', 'viewReports'],
+            'manager'  => ['accessDashboard', 'viewReports', 'manageBatches'],
         ];
         return $map[$this->role] ?? [];
     }
@@ -53,11 +53,11 @@ class User extends Authenticatable
     public function allowedPages(): array
     {
         $map = [
-            'admin'      => ['dashboard', 'inventory', 'production', 'batches', 'reports', 'users', 'settings', 'logs'],
-            'inventory'  => ['dashboard', 'inventory', 'reports'],
-            'production' => ['dashboard', 'production', 'batches', 'reports'],
-            'manager'    => ['dashboard', 'reports'],
-        ];
+    'admin'      => ['dashboard', 'inventory', 'production', 'batches', 'reports', 'orders', 'users', 'settings', 'logs'],
+   'inventory'  => ['dashboard', 'inventory', 'reports', 'orders'],
+'production' => ['dashboard', 'production', 'batches', 'reports'],
+    'manager'    => ['dashboard', 'batches', 'reports'],
+];
         return $map[$this->role] ?? [];
     }
 

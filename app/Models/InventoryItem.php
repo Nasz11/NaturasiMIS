@@ -5,10 +5,10 @@
 
     class InventoryItem extends Model
     {
-        protected $fillable = [
-            'product_name', 'category', 'quantity',
-            'unit', 'reorder_level', 'status', 'updated_by',
-        ];
+       protected $fillable = [
+    'product_name', 'category', 'quantity',
+    'unit', 'reorder_level', 'status', 'updated_by', 'is_archived',
+];
 
         protected static function booted()
         {

@@ -437,3 +437,14 @@ body {
     margin: 1rem 0;
   }
 }
+
+.input-group #togglePassword {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #999;
+  font-size: 1.1rem;
+  left: auto;
+}

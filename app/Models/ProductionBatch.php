@@ -4,10 +4,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductionBatch extends Model
 {
-    protected $fillable = [
-        'batch_number', 'product_type', 'quantity',
-        'production_date', 'status', 'remarks', 'staff_id',
-    ];
+   protected $fillable = [
+    'batch_number', 'product_type', 'quantity',
+    'production_date', 'status', 'remarks', 'staff_id', 'is_archived',
+];
 
     protected $casts = ['production_date' => 'date'];
 

@@ -1,8 +1,8 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\ActivityLog;
-use App\Models\Batch;
 use App\Models\InventoryItem;
 use App\Models\ProductionBatch;
 use Illuminate\Http\Request;
@@ -12,19 +12,16 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $type      = $request->get('report_type', 'inventory');
-
-        // Sanitize empty date strings to null
         $startDate = $request->get('start_date') ?: null;
         $endDate   = $request->get('end_date') ?: null;
 
         $data = match ($type) {
             'production' => $this->productionReport($startDate, $endDate),
-            'batches'    => $this->batchesReport($startDate, $endDate),
-            'activity'   => $this->activityReport($startDate, $endDate),
+           'activity'   => $this->activityReport($startDate, $endDate),
+'orders'     => $this->ordersReport($startDate, $endDate),
             default      => $this->inventoryReport($startDate, $endDate),
         };
 
-        // Chart data (monthly production & inventory for the last 6 months)
         $chartLabels     = [];
         $chartProduction = [];
         $chartInventory  = [];
@@ -49,7 +46,6 @@ class ReportsController extends Controller
         ));
     }
 
-    // inventory_items: product_name, category, quantity, unit, status, updated_at
     private function inventoryReport($start = null, $end = null)
     {
         return InventoryItem::when($start, fn($q) => $q->whereDate('updated_at', '>=', $start))
@@ -59,13 +55,12 @@ class ReportsController extends Controller
             ->map(fn($i) => [
                 'date'        => $i->updated_at->format('Y-m-d'),
                 'module'      => 'Inventory',
-                'description' => $i->product_name . ' — ' . $i->category,
+                'description' => $i->product_name . ' – ' . $i->category,
                 'value'       => $i->quantity . ' ' . $i->unit,
                 'status'      => $i->status,
             ]);
     }
 
-    // production_batches: batch_number, product_type, quantity, production_date, status
     private function productionReport($start, $end)
     {
         return ProductionBatch::with('staff')
@@ -76,32 +71,13 @@ class ReportsController extends Controller
             ->map(fn($b) => [
                 'date'        => $b->production_date->format('Y-m-d'),
                 'module'      => 'Production',
-                'description' => 'Batch ' . $b->batch_number . ' — ' . $b->product_type
+                'description' => 'Batch ' . $b->batch_number . ' – ' . $b->product_type
                                  . ($b->staff ? ' (by ' . $b->staff->username . ')' : ''),
                 'value'       => $b->quantity . ' kg',
                 'status'      => $b->status,
             ]);
     }
 
-    // batches: batch_id, cheese_type, quantity, start_date, completion_date, status
-    private function batchesReport($start, $end)
-    {
-        return Batch::with('staff')
-            ->when($start, fn($q) => $q->whereDate('start_date', '>=', $start))
-            ->when($end,   fn($q) => $q->whereDate('start_date', '<=', $end))
-            ->orderByDesc('start_date')
-            ->get()
-            ->map(fn($b) => [
-                'date'        => $b->start_date->format('Y-m-d'),
-                'module'      => 'Batches',
-                'description' => 'Batch ' . $b->batch_id . ' — ' . $b->cheese_type
-                                 . ($b->staff ? ' (by ' . $b->staff->username . ')' : ''),
-                'value'       => $b->quantity . ' kg',
-                'status'      => $b->status,
-            ]);
-    }
-
-    // activity_logs: username, module, action, details, created_at
     private function activityReport($start, $end)
     {
         return ActivityLog::with('user')
@@ -113,8 +89,23 @@ class ReportsController extends Controller
                 'date'        => $l->created_at->format('Y-m-d'),
                 'module'      => $l->module,
                 'description' => $l->username . ': ' . $l->action,
-                'value'       => $l->details ?? '—',
+                'value'       => $l->details ?? '–',
                 'status'      => 'Logged',
             ]);
     }
+    private function ordersReport($start, $end)
+{
+    return Order::with('createdBy')
+        ->when($start, fn($q) => $q->whereDate('confirmed_at', '>=', $start))
+        ->when($end,   fn($q) => $q->whereDate('confirmed_at', '<=', $end))
+        ->orderByDesc('confirmed_at')
+        ->get()
+        ->map(fn($o) => [
+            'date'        => $o->confirmed_at?->format('Y-m-d') ?? $o->created_at->format('Y-m-d'),
+            'module'      => 'Orders',
+            'description' => $o->cheese_product . ' — ordered by ' . ($o->createdBy?->username ?? 'N/A'),
+            'value'       => $o->quantity . ' ' . $o->unit,
+            'status'      => $o->status,
+        ]);
 }
+}   

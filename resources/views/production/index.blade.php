@@ -5,80 +5,139 @@
 
 @section('content')
 <section id="production">
+
   <div class="module-header">
     <h2><i class="fas fa-industry"></i> Production Batches</h2>
     <div class="actions">
-      <div class="search-wrapper" style="display:flex;align-items:center;gap:.5rem;border:1px solid #ccc;border-radius:8px;padding:.4rem .8rem;background:#fff;">
-        <i class="fas fa-search" style="color:#888;"></i>
-        <input type="text" placeholder="Search by batch number or type..." class="input-search"
-          id="batchSearch" style="border:none;outline:none;font-size:.95rem;width:240px;" />
+      <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search by batch number or type..." class="input-search" id="batchSearch" />
       </div>
       @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
-      <button class="btn-primary production-add-btn" id="openAddBatch">
+      <button class="btn-primary" id="openAddBatch">
         <i class="fas fa-plus"></i> Add New Batch
       </button>
       @endif
     </div>
   </div>
 
-  <div class="table-container">
-    <table id="productionTable">
-      <thead>
-        <tr>
-          <th>Batch No.</th><th>Product Type</th><th>Quantity</th>
-          <th>Production Date</th><th>Status</th><th>Remarks</th><th>Staff</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="productionTableBody">
-        @forelse($batches as $batch)
-        <tr>
-          <td>{{ $batch->batch_number }}</td>
-          <td>{{ $batch->product_type }}</td>
-          <td>{{ $batch->quantity }} kg</td>
-          <td>{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}</td>
-          <td><span class="status-tag {{ $batch->status === 'Completed' ? 'inactive' : 'active' }}">{{ strtoupper($batch->status) }}</span></td>
-          <td>{{ $batch->remarks ?? 'N/A' }}</td>
-          <td>{{ $batch->staff->username ?? 'N/A' }}</td>
-          <td class="actions-col">
-            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
-            <button class="action-btn edit-btn"
-              data-id="{{ $batch->id }}"
-              data-batch="{{ $batch->batch_number }}"
-              data-type="{{ $batch->product_type }}"
-              data-qty="{{ $batch->quantity }}"
-              data-date="{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}"
-              data-status="{{ $batch->status }}"
-              data-remarks="{{ $batch->remarks ?? '' }}">
-              <i class="fas fa-pen"></i>
-            </button>
-            <form action="{{ route('production.destroy', $batch) }}" method="POST" class="d-inline delete-form">
-              @csrf @method('DELETE')
-              <button type="button" class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
-            </form>
-            @endif
-          </td>
-        </tr>
-        @empty
-        <tr id="emptyRow"><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No production batches yet. Click "Add New Batch" to get started.</td></tr>
-        @endforelse
-      </tbody>
-    </table>
+  {{-- TABS --}}
+ <div style="display:flex; gap:1rem; margin-top:1rem;">
+    <button class="btn-tab active" id="tabActive" onclick="switchTab('active')">
+      <i class="fas fa-industry"></i> Active Batches
+    </button>
+    <button class="btn-tab" id="tabArchived" onclick="switchTab('archived')">
+      <i class="fas fa-archive"></i> Archived Batches
+    </button>
   </div>
-</section>
+
+  {{-- ACTIVE BATCHES TABLE --}}
+  <div id="activeTable">
+    <div class="table-container">
+      <table id="productionTable">
+        <thead>
+          <tr>
+            <th>Batch No.</th><th>Product Type</th><th>Quantity</th>
+            <th>Production Date</th><th>Status</th><th>Remarks</th><th>Staff</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productionTableBody">
+          @forelse($batches as $batch)
+          <tr>
+            <td>{{ $batch->batch_number }}</td>
+            <td>{{ $batch->product_type }}</td>
+            <td>{{ $batch->quantity }} kg</td>
+            <td>{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}</td>
+       <td><span class="status-tag {{ $batch->status === 'Completed' ? 'active' : ($batch->status === 'In Production' ? 'low' : 'inactive') }}">{{ strtoupper($batch->status) }}</span></td>
+            <td>{{ $batch->remarks ?? 'N/A' }}</td>
+            <td>{{ $batch->staff->username ?? 'N/A' }}</td>
+            <td class="actions-col">
+              @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
+              <button class="action-btn edit-btn"
+                data-id="{{ $batch->id }}"
+                data-batch="{{ $batch->batch_number }}"
+                data-type="{{ $batch->product_type }}"
+                data-qty="{{ $batch->quantity }}"
+                data-date="{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}"
+                data-status="{{ $batch->status }}"
+                data-remarks="{{ $batch->remarks ?? '' }}">
+                <i class="fas fa-pen"></i>
+              </button>
+              <form action="{{ route('production.archive', $batch) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="button" class="action-btn archive-btn" title="Archive">
+                  <i class="fas fa-archive"></i>
+                </button>
+              </form>
+              @endif
+            </td>
+          </tr>
+          @empty
+          <tr id="emptyRow"><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No production batches yet.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{-- ARCHIVED BATCHES TABLE --}}
+  <div id="archivedTable" style="display:none;">
+    <div class="table-container">
+      <table id="archivedProductionTable">
+        <thead>
+          <tr>
+            <th>Batch No.</th><th>Product Type</th><th>Quantity</th>
+            <th>Production Date</th><th>Status</th><th>Remarks</th><th>Staff</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($archivedBatches as $batch)
+          <tr>
+            <td>{{ $batch->batch_number }}</td>
+            <td>{{ $batch->product_type }}</td>
+            <td>{{ $batch->quantity }} kg</td>
+            <td>{{ \Carbon\Carbon::parse($batch->production_date)->format('Y-m-d') }}</td>
+            <td><span class="status-tag inactive">{{ strtoupper($batch->status) }}</span></td>
+            <td>{{ $batch->remarks ?? 'N/A' }}</td>
+            <td>{{ $batch->staff->username ?? 'N/A' }}</td>
+            <td class="actions-col">
+              <form action="{{ route('production.restore', $batch) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="action-btn" title="Restore" style="color:#1a6b47;">
+                  <i class="fas fa-undo"></i>
+                </button>
+              </form>
+              @if(auth()->user()->role === 'admin')
+              <form action="{{ route('production.destroy', $batch) }}" method="POST" class="d-inline delete-form">
+                @csrf @method('DELETE')
+                <button type="button" class="action-btn delete-btn" title="Permanently Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+              @endif
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No archived batches.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 {{-- ADD MODAL --}}
-<div id="addBatchModal" class="modal">
+<div id="addBatchModal" class="modal">    
   <div class="modal-content">
     <h2>Add New Production Batch</h2>
     <form action="{{ route('production.store') }}" method="POST" class="form-grid">
       @csrf
       <div class="form-group">
-        <label for="batchNumber">Batch Number</label>
-        <input type="text" name="batch_number" id="batchNumber" placeholder="e.g., B-2025-003" required />
+        <label>Batch Number</label>
+        <input type="text" name="batch_number" placeholder="e.g., B-2025-003" required />
       </div>
       <div class="form-group">
-        <label for="productType">Product / Cheese Type</label>
-        <select name="product_type" id="productType" required>
+        <label>Product / Cheese Type</label>
+        <select name="product_type" required>
           <option value="">Select cheese type</option>
           @foreach(['Burrata','Stracciatella','Cherry Mozzarella','Traditional Mozzarella','Provola','Mozzarella di Latte'] as $t)
             <option value="{{ $t }}">{{ $t }}</option>
@@ -86,24 +145,24 @@
         </select>
       </div>
       <div class="form-group">
-        <label for="batchQuantity">Quantity Produced (kg)</label>
-        <input type="number" name="quantity" id="batchQuantity" step="0.01" min="0.01" placeholder="e.g., 100" required />
+        <label>Quantity Produced (kg)</label>
+        <input type="number" name="quantity" step="0.01" min="0.01" placeholder="e.g., 100" required />
       </div>
       <div class="form-group">
-        <label for="productionDate">Production Date</label>
-        <input type="date" name="production_date" id="productionDate" required />
+        <label>Production Date</label>
+        <input type="date" name="production_date" required />
       </div>
       <div class="form-group">
-        <label for="batchStatus">Status</label>
-        <select name="status" id="batchStatus">
+        <label>Status</label>
+        <select name="status">
           <option value="In Production">In Production</option>
           <option value="Curing">Curing</option>
           <option value="Completed">Completed</option>
         </select>
       </div>
       <div class="form-group">
-        <label for="batchRemarks">Remarks</label>
-        <input type="text" name="remarks" id="batchRemarks" placeholder="Optional notes" />
+        <label>Remarks</label>
+        <input type="text" name="remarks" placeholder="Optional notes" />
       </div>
       <div class="modal-buttons">
         <button type="button" id="closeAddBatch" class="btn-cancel">Cancel</button>
@@ -159,22 +218,41 @@
   </div>
 </div>
 
-{{-- DELETE MODAL --}}
-<div id="deleteBatchModal" class="modal">
+{{-- ARCHIVE CONFIRM MODAL --}}
+<div id="archiveBatchModal" class="modal">
   <div class="modal-content small-modal">
-    <h2>Confirm Delete</h2>
-    <p>Are you sure you want to delete this production batch?</p>
+    <h2>Confirm Archive</h2>
+    <p>Are you sure you want to archive this batch? You can restore it later.</p>
     <div class="modal-buttons">
-      <button class="btn-cancel" id="cancelDeleteBatch">Cancel</button>
-      <button class="btn-save btn-delete" id="confirmDeleteBatch"><i class="fas fa-trash"></i> Delete</button>
+      <button class="btn-cancel" id="cancelArchiveBatch">Cancel</button>
+      <button class="btn-delete" id="confirmArchiveBatch"><i class="fas fa-archive"></i> Archive</button>
     </div>
   </div>
 </div>
 
-@endsection
+{{-- DELETE CONFIRM MODAL --}}
+<div id="deleteBatchModal" class="modal">
+  <div class="modal-content small-modal">
+    <h2>Confirm Delete</h2>
+    <p>Are you sure you want to permanently delete this batch? This cannot be undone.</p>
+    <div class="modal-buttons">
+      <button class="btn-cancel" id="cancelDeleteBatch">Cancel</button>
+     <button class="btn-delete" id="confirmDeleteBatch"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
 
-@push('scripts')
 <script>
+const openModal  = (m) => { m?.classList.add('active'); document.body.classList.add('modal-open'); };
+const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
+
+// Tab switching
+function switchTab(tab) {
+  document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
+  document.getElementById('archivedTable').style.display = tab === 'archived' ? 'block' : 'none';
+  document.getElementById('tabActive').classList.toggle('active',   tab === 'active');
+  document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
+}
 
 // Add modal
 document.getElementById('openAddBatch')?.addEventListener('click', () => openModal(document.getElementById('addBatchModal')));
@@ -195,6 +273,17 @@ document.querySelectorAll('.edit-btn').forEach(btn => {
 });
 document.getElementById('closeEditBatch')?.addEventListener('click', () => closeModal(document.getElementById('editBatchModal')));
 
+// Archive modal
+let pendingArchiveForm = null;
+document.querySelectorAll('.archive-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    pendingArchiveForm = btn.closest('form');
+    openModal(document.getElementById('archiveBatchModal'));
+  });
+});
+document.getElementById('confirmArchiveBatch')?.addEventListener('click', () => pendingArchiveForm?.submit());
+document.getElementById('cancelArchiveBatch')?.addEventListener('click', () => closeModal(document.getElementById('archiveBatchModal')));
+
 // Delete modal
 let pendingDeleteForm = null;
 document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -214,6 +303,7 @@ document.getElementById('batchSearch')?.addEventListener('input', function () {
     row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 });
-
 </script>
-@endpush
+
+</section>
+@endsection 

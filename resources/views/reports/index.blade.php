@@ -22,11 +22,19 @@
     style="margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;">
     <div class="form-group">
       <label>Report Type</label>
-      <select name="report_type" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;">
+    <select name="report_type" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;">
+        @if(in_array(auth()->user()->role, ['admin', 'inventory', 'manager']))
         <option value="inventory"  {{ $type==='inventory'  ? 'selected':'' }}>Inventory Report</option>
+        @endif
+        @if(in_array(auth()->user()->role, ['admin', 'production', 'manager']))
         <option value="production" {{ $type==='production' ? 'selected':'' }}>Production Report</option>
-        <option value="batches"    {{ $type==='batches'    ? 'selected':'' }}>Batch Report</option>
+        @endif
+        @if(in_array(auth()->user()->role, ['admin', 'inventory', 'manager']))
+        <option value="orders"     {{ $type==='orders'     ? 'selected':'' }}>Orders Report</option>
+        @endif
+        @if(auth()->user()->role === 'admin')
         <option value="activity"   {{ $type==='activity'   ? 'selected':'' }}>User Activity Summary</option>
+        @endif
       </select>
     </div>
     <div class="form-group">
@@ -68,11 +76,35 @@
           <i class="fas fa-print"></i> Print
         </button>
         {{-- Export to PDF Button --}}
+       <button class="btn-reset view-reports-btn" onclick="exportCSV()">
+          <i class="fas fa-file-csv"></i> Export CSV
+        </button>
         <button class="btn-primary view-reports-btn" onclick="exportPDF()">
           <i class="fas fa-file-pdf"></i> Export PDF
         </button>
       </div>
     </div>
+    {{-- SUMMARY TOTALS --}}
+    @if(count($reportData) > 0)
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
+        <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Total Records</div>
+        <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">{{ count($reportData) }}</div>
+      </div>
+   @if($type === 'inventory' || $type === 'production' || $type === 'orders')
+      <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
+        <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Total Quantity</div>
+        <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">
+          {{ $reportData->sum(fn($r) => (float) filter_var($r['value'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)) }} kg
+        </div>
+      </div>
+      @endif
+      <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
+        <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Report Type</div>
+        <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">{{ ucfirst($type) }}</div>
+      </div>
+    </div>
+    @endif
 
     <table id="reportTable" style="width:100%;border-collapse:collapse;">
       <thead>
@@ -93,7 +125,7 @@
           <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['description'] }}</td>
           <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['value'] }}</td>
           <td style="padding:.75rem;border:1px solid #ddd;">
-            <span class="status-tag {{ in_array($row['status'], ['In Stock','Completed','Logged']) ? 'active' : 'inactive' }}">
+            <span class="status-tag {{ in_array($row['status'], ['In Stock','Completed','Logged','Confirmed']) ? 'active' : 'inactive' }}">
               {{ $row['status'] }}
             </span>
           </td>
@@ -199,6 +231,27 @@ function exportPDF() {
   });
 
   doc.save('{{ $type }}-report-{{ now()->format("Y-m-d") }}.pdf');
+}
+
+function exportCSV() {
+  const table = document.getElementById('reportTable');
+  let csv = [];
+  table.querySelectorAll('thead th').forEach((th, i, arr) => {
+    if (i === 0) csv.push([]);
+    csv[0].push('"' + th.innerText.trim() + '"');
+  });
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const cells = [];
+    tr.querySelectorAll('td').forEach(td => cells.push('"' + td.innerText.trim() + '"'));
+    if (cells.length > 1) csv.push(cells);
+  });
+  const csvContent = csv.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '{{ $type }}-report-{{ now()->format("Y-m-d") }}.csv';
+  a.click();
 }
 </script>
 @endpush    

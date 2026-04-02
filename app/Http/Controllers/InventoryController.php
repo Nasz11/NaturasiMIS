@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\ActivityLog;
 use App\Models\InventoryItem;
 use Illuminate\Http\Request;
@@ -10,8 +8,19 @@ class InventoryController extends Controller
 {
     public function index()
     {
-        $items = InventoryItem::with('updatedBy')->orderByDesc('updated_at')->get();
-        return view('inventory.index', compact('items'));
+        $items = InventoryItem::with('updatedBy')
+            ->where('is_archived', false)
+            ->orderBy('category')
+            ->orderBy('product_name')
+            ->get();
+
+        $archivedItems = InventoryItem::with('updatedBy')
+            ->where('is_archived', true)
+            ->orderBy('category')
+            ->orderBy('product_name')
+            ->get();
+
+        return view('inventory.index', compact('items', 'archivedItems'));
     }
 
     public function store(Request $request)
@@ -34,7 +43,6 @@ class InventoryController extends Controller
         ]);
 
         ActivityLog::record('Inventory', 'Added Item', "Added {$item->product_name} ({$item->quantity} {$item->unit})");
-
         return back()->with('success', 'Inventory item added successfully.');
     }
 
@@ -58,17 +66,28 @@ class InventoryController extends Controller
         ]);
 
         ActivityLog::record('Inventory', 'Updated Item', "Updated {$inventoryItem->product_name}");
-
         return back()->with('success', 'Inventory item updated successfully.');
+    }
+
+    public function archive(InventoryItem $inventoryItem)
+    {
+        $inventoryItem->update(['is_archived' => true]);
+        ActivityLog::record('Inventory', 'Archived Item', "Archived {$inventoryItem->product_name}");
+        return back()->with('success', "{$inventoryItem->product_name} has been archived.");
+    }
+
+    public function restore(InventoryItem $inventoryItem)
+    {
+        $inventoryItem->update(['is_archived' => false]);
+        ActivityLog::record('Inventory', 'Restored Item', "Restored {$inventoryItem->product_name}");
+        return back()->with('success', "{$inventoryItem->product_name} has been restored.");
     }
 
     public function destroy(InventoryItem $inventoryItem)
     {
         $name = $inventoryItem->product_name;
         $inventoryItem->delete();
-
-        ActivityLog::record('Inventory', 'Deleted Item', "Deleted {$name}");
-
-        return back()->with('success', 'Item removed from inventory.');
+        ActivityLog::record('Inventory', 'Deleted Item', "Permanently deleted {$name}");
+        return back()->with('success', 'Item permanently deleted.');
     }
 }

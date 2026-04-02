@@ -35,11 +35,11 @@
             value="{{ old('username') }}" required autofocus>
         </div>
 
-        <div class="input-group">
-          <i class="ri-lock-2-line"></i>
-          <input type="password" name="password" placeholder="Password" required>
-        </div>
-
+       <div class="input-group">
+  <i class="ri-lock-2-line"></i>
+  <input type="password" name="password" id="passwordInput" placeholder="Password" required>
+  <i class="ri-eye-off-line" id="togglePassword" style="cursor:pointer; position:absolute; right:1rem; color:#999;"></i>
+</div>
         <div class="options">
           <label>
             <input type="checkbox" name="remember"> Remember me
@@ -60,5 +60,18 @@
     </div>
   </section>
 </div>
+<script>
+document.getElementById('togglePassword')?.addEventListener('click', function() {
+  const input = document.getElementById('passwordInput');
+  if (input.type === 'password') {
+    input.type = 'text';
+    this.classList.replace('ri-eye-off-line', 'ri-eye-line');
+  } else {
+    input.type = 'password';
+    this.classList.replace('ri-eye-line', 'ri-eye-off-line');
+  }
+});
+</script>
 </body>
+
 </html>

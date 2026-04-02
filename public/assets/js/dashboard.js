@@ -13,7 +13,6 @@ const openModal = (modal, focusEl = null) => {
   document.body.classList.add("modal-open");
   if (focusEl) setTimeout(() => focusEl?.focus(), 120);
 };
-
 const closeModal = (modal) => {
   modal?.classList.remove("active");
   document.body.classList.remove("modal-open");
@@ -165,9 +164,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   confirmDelete?.addEventListener("click", () => {
-    if (currentDeleteRow) currentDeleteRow.remove();
+    const form = currentDeleteRow?.querySelector(".delete-form");
+    if (form) form.submit();
     closeModal(deleteItemModal);
-    showFloatingAlert("Inventory item deleted successfully", "success");
   });
 
   /* ===== PRODUCTION EDIT & DELETE MODALS ===== */

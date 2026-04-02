@@ -35,14 +35,11 @@
     <h2><i class="fas fa-database"></i> Backup & Maintenance</h2>
     <p>Backup, restore, or reset the system data (Admin only).</p>
     <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-      <button class="btn-primary system-config-btn" id="backupBtn">
+     <a href="{{ route('settings.backup') }}" class="btn-primary system-config-btn">
         <i class="fas fa-download"></i> Backup Data
-      </button>
+      </a>
       <button class="btn-reset system-config-btn" id="restoreBtn">
         <i class="fas fa-undo"></i> Restore Backup
-      </button>
-      <button class="btn-delete system-config-btn" id="resetSystemBtn">
-        <i class="fas fa-trash"></i> Reset System
       </button>
     </div>
   </div>
@@ -70,6 +67,27 @@
     </form>
   </div>
 </div>
+
+{{-- RESTORE MODAL --}}
+<div id="restoreModal" class="modal">
+  <div class="modal-content small-modal">
+    <h2><i class="fas fa-undo"></i> Restore Backup</h2>
+    <p>Upload a <strong>.sql</strong> backup file to restore the database. This will overwrite current data.</p>
+    <form action="{{ route('settings.restore') }}" method="POST" enctype="multipart/form-data" class="form-grid">
+      @csrf
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Select Backup File (.sql)</label>
+        <input type="file" name="backup_file" accept=".sql,.txt" required />
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="closeRestore" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-save"><i class="fas fa-undo"></i> Restore</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
 @endsection
 
 @push('scripts')
@@ -79,5 +97,7 @@ const closeModal = (m) => { m?.classList.remove('active'); document.body.classLi
 
 document.getElementById('editSystemInfoBtn')?.addEventListener('click', () => openModal(document.getElementById('editSystemInfoModal')));
 document.getElementById('closeEditSystem')?.addEventListener('click', () => closeModal(document.getElementById('editSystemInfoModal')));
+document.getElementById('restoreBtn')?.addEventListener('click', () => openModal(document.getElementById('restoreModal')));
+document.getElementById('closeRestore')?.addEventListener('click', () => closeModal(document.getElementById('restoreModal')));
 </script>
 @endpush

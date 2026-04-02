@@ -9,18 +9,21 @@
   @section('content')
   <section id="dashboard">
     {{-- STATS CARDS --}}
-    <div class="stats">
+   <div class="stats">
     <div class="card" style="cursor:pointer;">
+        <i class="fas fa-industry" style="font-size:1.8rem;color:#1a6b47;margin-bottom:0.8rem;"></i>
         <h4>Active Batches</h4>
         <h2>{{ $totalStock }}</h2>
         <p style="font-size:0.75rem;color:#888;margin:0;">Currently in production</p>
       </div>
     <div class="card" id="todayOutputCard" style="cursor:pointer;">
+        <i class="fas fa-weight" style="font-size:1.8rem;color:#1a6b47;margin-bottom:0.8rem;"></i>
         <h4>Today's Output</h4>
         <h2>{{ number_format($todayOutput) }} kg</h2>
         <p style="font-size:0.75rem;color:#888;margin:0;">Click to view details</p>
       </div>
       <div class="card alert" id="lowStockCard" style="cursor:pointer;">
+        <i class="fas fa-exclamation-circle" style="font-size:1.8rem;color:#c62828;margin-bottom:0.8rem;"></i>
         <h4>Low Stock Alerts</h4>
         <h2>{{ $lowStockCount }}</h2>
       </div>
@@ -38,7 +41,8 @@
         <ul>
           @forelse($recentNotifications as $log)
             <li>
-              <i class="fas fa-{{ $log->module === 'Production' ? 'clipboard-check' : ($log->module === 'Inventory' ? 'box-open' : 'exclamation-triangle') }}"></i>
+         @php $icon = $log->action === 'Login' ? 'sign-in-alt' : ($log->action === 'Logout' ? 'sign-out-alt' : ($log->action === 'Generated Report' ? 'chart-bar' : ($log->action === 'Restored User' ? 'user-check' : ($log->action === 'Archived User' ? 'user-slash' : ($log->module === 'Production' ? 'clipboard-check' : ($log->module === 'Inventory' ? 'box-open' : 'bell')))))); @endphp
+<i class="fas fa-{{ $icon }}"></i>
               {{ $log->action }}
               <span>{{ $log->created_at->diffForHumans() }}</span>
             </li>
@@ -69,8 +73,8 @@
       </div>
     </div>
  </section>
-  <div id="lowStockModal" class="custom-modal">
-    <div class="modal-box" style="width:580px;max-width:95vw;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+ <div id="lowStockModal" class="custom-modal">
+    <div class="modal-box" style="width:580px;max-width:95vw;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.15);border-top:4px solid #e53935;">
       
       {{-- Header --}}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0;">
@@ -127,8 +131,8 @@
   </div>
 
   {{-- TODAY'S OUTPUT MODAL --}}
-  <div id="todayOutputModal" class="custom-modal">
-    <div class="modal-box" style="width:580px;max-width:95vw;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+<div id="todayOutputModal" class="custom-modal">
+    <div class="modal-box" style="width:580px;max-width:95vw;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.15);border-top:4px solid #1a6b47;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0;">
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <div style="background:#e8f5e9;border-radius:10px;padding:0.6rem;">
