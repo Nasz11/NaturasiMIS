@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
    Route::middleware(['role:admin,inventory'])->group(function () {
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::post('/inventory/movement', [InventoryController::class, 'storeMovement'])->name('inventory.movement');
     Route::put('/inventory/{inventoryItem}', [InventoryController::class, 'update'])->name('inventory.update');
     Route::post('/inventory/{inventoryItem}/archive', [InventoryController::class, 'archive'])->name('inventory.archive');
     Route::post('/inventory/{inventoryItem}/restore', [InventoryController::class, 'restore'])->name('inventory.restore');

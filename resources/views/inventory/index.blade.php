@@ -15,17 +15,17 @@ $rawMaterials = [
     'Cheddar Flavor', 'Milk Powder',
 ];
 $unitMap = [
-    'Burrata'               => 'kg', 'Stracciatella'       => 'kg',
-    'Cherry Mozzarella'     => 'kg', 'Traditional Mozzarella' => 'kg',
-    'Provola'               => 'kg', 'Mozzarella di Latte' => 'kg',
-    'Cagliata'              => 'kg', 'Fresh Milk'          => 'L',
-    'Cream'                 => 'L',  'Iodized Salt'        => 'kg',
-    'Rock Salt'             => 'kg', 'Trisodium'           => 'kg',
-    'Rennet'                => 'kg', 'Citric Acid'         => 'kg',
-    'Palm Oil'              => 'L',  'Skimmed Milk'        => 'L',
-    'High Melt Starch'      => 'kg', 'Butter Flavor'       => 'kg',
-    'Butter Milk'           => 'L',  'Parmesan Flavor'     => 'kg',
-    'Cheddar Flavor'        => 'kg', 'Milk Powder'         => 'kg',
+    'Burrata'                => 'kg', 'Stracciatella'          => 'kg',
+    'Cherry Mozzarella'      => 'kg', 'Traditional Mozzarella' => 'kg',
+    'Provola'                => 'kg', 'Mozzarella di Latte'    => 'kg',
+    'Cagliata'               => 'kg', 'Fresh Milk'             => 'L',
+    'Cream'                  => 'L',  'Iodized Salt'           => 'kg',
+    'Rock Salt'              => 'kg', 'Trisodium'              => 'kg',
+    'Rennet'                 => 'kg', 'Citric Acid'            => 'kg',
+    'Palm Oil'               => 'L',  'Skimmed Milk'           => 'L',
+    'High Melt Starch'       => 'kg', 'Butter Flavor'          => 'kg',
+    'Butter Milk'            => 'L',  'Parmesan Flavor'        => 'kg',
+    'Cheddar Flavor'         => 'kg', 'Milk Powder'            => 'kg',
 ];
 @endphp
 
@@ -53,58 +53,186 @@ $unitMap = [
     </div>
   </div>
 
-{{-- TABS --}}
-  <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
-    <button class="btn-tab active" id="tabActive" onclick="switchTab('active')">
-      <i class="fas fa-box"></i> Active Items
-    </button>
-    <button class="btn-tab" id="tabArchived" onclick="switchTab('archived')">
-      <i class="fas fa-archive"></i> Archived Items
-    </button>
+  {{-- TABS + DATE + COLUMNS all in one row --}}
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;">
+
+    {{-- Tab Pills --}}
+    <div style="display:flex;gap:4px;background:#f0f0f0;border-radius:10px;padding:4px;">
+      <button class="inv-tab" id="tabActive" onclick="switchTab('active')"
+        style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:#1a6b47;color:#fff;box-shadow:0 2px 6px rgba(26,107,71,0.25);">
+        <i class="fas fa-box"></i> Current Stock
+      </button>
+      <button class="inv-tab" id="tabInbound" onclick="switchTab('inbound')"
+        style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:#555;">
+        <i class="fas fa-arrow-circle-down"></i> Inbound
+      </button>
+      <button class="inv-tab" id="tabOutbound" onclick="switchTab('outbound')"
+        style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:#555;">
+        <i class="fas fa-arrow-circle-up"></i> Outbound
+      </button>
+      <button class="inv-tab" id="tabArchived" onclick="switchTab('archived')"
+        style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:#555;">
+        <i class="fas fa-archive"></i> Archived
+      </button>
+    </div>
+
+    {{-- Date Picker --}}
+    <form method="GET" action="{{ route('inventory.index') }}" style="display:flex;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:5px 10px;">
+        <i class="fas fa-calendar-alt" style="color:#1a6b47;font-size:0.75rem;"></i>
+        <input type="date" name="date" value="{{ $date }}" onchange="this.form.submit()"
+          style="border:none;outline:none;font-size:0.8rem;font-weight:600;color:#333;background:transparent;cursor:pointer;" />
+      </div>
+    </form>
+
+    {{-- Columns Dropdown --}}
+    <div style="position:relative;display:inline-block;">
+      <button id="colToggleBtn" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:0.8rem;cursor:pointer;font-weight:600;color:#333;">
+        <i class="fas fa-table-columns" style="color:#1a6b47;"></i> Columns
+        <span id="colActiveCount" style="background:#1a6b47;color:#fff;border-radius:20px;padding:1px 6px;font-size:0.7rem;"></span>
+        <i class="fas fa-chevron-down" style="font-size:0.6rem;color:#aaa;"></i>
+      </button>
+      <div id="colDropdown" style="display:none;position:absolute;top:110%;left:0;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:8px;z-index:999;min-width:220px;">
+        <div style="padding:6px 10px 8px;border-bottom:1px solid #f0f0f0;margin-bottom:6px;">
+          <span style="font-size:0.75rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Toggle Columns</span>
+        </div>
+        <div id="colToggleBar" style="display:flex;flex-direction:column;gap:2px;"></div>
+      </div>
+    </div>
+
   </div>
 
-  {{-- ACTIVE ITEMS TABLE --}}
+  <style>
+  #colDropdown.open { display:block !important; }
+  #colToggleBar button {
+    display:flex;align-items:center;gap:10px;padding:7px 10px;
+    border-radius:8px;border:none;background:none;cursor:pointer;
+    font-size:0.85rem;color:#333;text-align:left;width:100%;transition:background 0.15s;
+  }
+  #colToggleBar button:hover { background:#f5f9f7; }
+  #colToggleBar button .check-icon {
+    width:17px;height:17px;border-radius:4px;border:1.5px solid #ccc;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;
+  }
+  #colToggleBar button.col-on .check-icon { background:#1a6b47;border-color:#1a6b47;color:#fff; }
+  </style>
+
+  {{-- CURRENT STOCK TABLE --}}
   <div id="activeTable">
+    <div class="table-container" style="overflow-x:auto;">
+     <table id="inventoryTable" style="min-width:900px;width:100%;table-layout:auto;">
+        <thead>
+          <tr id="invHeaderRow"></tr>
+        </thead>
+        <tbody id="invTableBody">
+          @foreach($items as $item)
+          @php
+            $selectedDate = \Carbon\Carbon::parse($date);
+            $starting     = $item->endingInventory($selectedDate->copy()->subDay());
+            $inboundQty   = isset($inboundMovements[$item->id]) ? $inboundMovements[$item->id]->sum('quantity') : 0;
+            $outboundQty  = isset($outboundMovements[$item->id]) ? $outboundMovements[$item->id]->sum('quantity') : 0;
+           $ending        = $starting + $inboundQty - $outboundQty;
+$currentStock  = $item->computedQuantity();
+$discrepancy   = $ending - $currentStock;
+$status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
+          @endphp
+          <tr
+            data-id="{{ $item->id }}"
+            data-product="{{ $item->product_name }}"
+            data-name="{{ $item->product_name }}"
+            data-category="{{ $item->category }}"
+            data-start="{{ number_format($starting, 2) }} {{ $item->unit }}"
+            data-inbound="{{ number_format($inboundQty, 2) }} {{ $item->unit }}"
+            data-outbound="{{ number_format($outboundQty, 2) }} {{ $item->unit }}"
+            data-end="{{ number_format($ending, 2) }} {{ $item->unit }}"
+            data-qty="{{ number_format($ending, 2) }}"
+            data-unit="{{ $item->unit }}"
+            data-unitraw="{{ $item->unit }}"
+            data-cost="₱{{ number_format($item->cost_per_unit, 2) }}"
+            data-costraw="{{ $item->cost_per_unit }}"
+            data-reorderraw="{{ $item->reorder_level }}"
+            data-status="{{ $status }}"
+            data-discrepancy="{{ number_format($discrepancy, 2) }} {{ $item->unit }}"
+            data-discrepancyraw="{{ $discrepancy }}"
+            data-canmanage="{{ auth()->user()->can('manageInventory') ? '1' : '0' }}"
+            data-archiveurl="{{ route('inventory.archive', $item) }}"
+          ></tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{-- INBOUND TABLE --}}
+  <div id="inboundTable" style="display:none;">
+    <div class="module-header" style="margin-bottom:1rem;">
+      <h2 style="font-size:1.1rem;"><i class="fas fa-arrow-circle-down" style="color:#1a6b47;"></i> Inbound Movements</h2>
+      @if(auth()->user()->can('manageInventory'))
+      <button class="btn-primary" id="openAddInbound">
+        <i class="fas fa-plus"></i> Record Inbound
+      </button>
+      @endif
+    </div>
     <div class="table-container">
-      <table id="inventoryTable">
+      <table id="inboundMovementsTable">
         <thead>
           <tr>
-            <th>Product Name</th><th>Category</th><th>Quantity</th>
-            <th>Unit</th><th>Reorder Level</th><th>Status</th>
-            <th>Date Updated</th><th>Actions</th>
+            <th>Date</th><th>Product</th><th>Category</th><th>Quantity</th>
+            <th>Unit</th><th>Reference/Invoice</th><th>Remarks</th><th>Recorded By</th>
           </tr>
         </thead>
         <tbody>
-          @forelse($items as $item)
+          @forelse($inboundMovements->flatten() as $movement)
           <tr>
-            <td>{{ $item->product_name }}</td>
-            <td>{{ $item->category }}</td>
-            <td>{{ $item->quantity }}</td>
-            <td>{{ $item->unit }}</td>
-            <td>{{ $item->reorder_level }}</td>
-            <td><span class="status-tag {{ $item->status === 'In Stock' ? 'active' : 'inactive' }}">{{ $item->status }}</span></td>
-            <td>{{ $item->updated_at->format('Y-m-d') }}</td>
-            <td class="actions-col">
-              @if(auth()->user()->can('manageInventory'))
-              <button class="action-btn edit-btn" data-id="{{ $item->id }}"
-                data-name="{{ $item->product_name }}" data-category="{{ $item->category }}"
-                data-quantity="{{ $item->quantity }}" data-unit="{{ $item->unit }}"
-                data-reorder="{{ $item->reorder_level }}">
-                <i class="fas fa-pen"></i>
-              </button>
-              @endif
-             @if(auth()->user()->can('manageInventory'))
-              <form action="{{ route('inventory.archive', $item) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="button" class="action-btn archive-btn" title="Archive">
-                  <i class="fas fa-archive"></i>
-                </button>
-              </form>
-              @endif
-            </td>
+            <td>{{ \Carbon\Carbon::parse($movement->movement_date)->format('Y-m-d') }}</td>
+            <td>{{ $movement->item->product_name }}</td>
+            <td>{{ $movement->item->category }}</td>
+            <td style="color:#1a6b47;font-weight:600;">+{{ $movement->quantity }}</td>
+            <td>{{ $movement->item->unit }}</td>
+            <td>{{ $movement->reference ?? '—' }}</td>
+            <td>{{ $movement->remarks ?? '—' }}</td>
+            <td>{{ $movement->recordedBy->username ?? 'System' }}</td>
           </tr>
           @empty
-          <tr><td colspan="8" style="text-align:center;">No inventory items yet.</td></tr>
+          <tr><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No inbound movements yet.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {{-- OUTBOUND TABLE --}}
+  <div id="outboundTable" style="display:none;">
+    <div class="module-header" style="margin-bottom:1rem;">
+      <h2 style="font-size:1.1rem;"><i class="fas fa-arrow-circle-up" style="color:#c62828;"></i> Outbound Movements</h2>
+      @if(auth()->user()->can('manageInventory'))
+      <button class="btn-primary" id="openAddOutbound">
+        <i class="fas fa-plus"></i> Record Outbound
+      </button>
+      @endif
+    </div>
+    <div class="table-container">
+      <table id="outboundMovementsTable">
+        <thead>
+          <tr>
+            <th>Date</th><th>Product</th><th>Category</th><th>Quantity</th>
+            <th>Unit</th><th>Reference</th><th>Remarks</th><th>Recorded By</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($outboundMovements->flatten() as $movement)
+          <tr>
+            <td>{{ \Carbon\Carbon::parse($movement->movement_date)->format('Y-m-d') }}</td>
+            <td>{{ $movement->item->product_name }}</td>
+            <td>{{ $movement->item->category }}</td>
+            <td style="color:#c62828;font-weight:600;">-{{ $movement->quantity }}</td>
+            <td>{{ $movement->item->unit }}</td>
+            <td>{{ $movement->reference ?? '—' }}</td>
+            <td>{{ $movement->remarks ?? '—' }}</td>
+            <td>{{ $movement->recordedBy->username ?? 'System' }}</td>
+          </tr>
+          @empty
+          <tr><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No outbound movements yet.</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -161,7 +289,7 @@ $unitMap = [
 @endsection
 
 @push('modals')
-{{-- ADD MODAL --}}
+{{-- ADD ITEM MODAL --}}
 <div id="addItemModal" class="modal">
   <div class="modal-content">
     <h2>Add New Item</h2>
@@ -182,10 +310,6 @@ $unitMap = [
         </select>
       </div>
       <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" name="quantity" step="0.01" min="0" placeholder="0" required />
-      </div>
-      <div class="form-group">
         <label>Unit</label>
         <select name="unit" id="addUnit">
           <option value="kg">kg</option>
@@ -195,9 +319,13 @@ $unitMap = [
           <option value="pcs">pcs</option>
         </select>
       </div>
-      <div class="form-group" style="grid-column: span 2;">
+      <div class="form-group">
         <label>Reorder Level</label>
         <input type="number" name="reorder_level" step="0.01" min="0" placeholder="Minimum stock before alert" required />
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Cost per Unit (₱)</label>
+        <input type="number" name="cost_per_unit" step="0.01" min="0" placeholder="e.g. 250.00" required />
       </div>
       <div class="modal-buttons">
         <button type="button" id="closeAddItem" class="btn-cancel">Cancel</button>
@@ -228,10 +356,6 @@ $unitMap = [
         </select>
       </div>
       <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" name="quantity" id="editQuantity" step="0.01" min="0" required />
-      </div>
-      <div class="form-group">
         <label>Unit</label>
         <select name="unit" id="editUnit">
           <option value="kg">kg</option>
@@ -241,9 +365,13 @@ $unitMap = [
           <option value="pcs">pcs</option>
         </select>
       </div>
-      <div class="form-group" style="grid-column: span 2;">
+      <div class="form-group">
         <label>Reorder Level</label>
         <input type="number" name="reorder_level" id="editReorder" step="0.01" min="0" required />
+      </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Cost per Unit (₱)</label>
+        <input type="number" name="cost_per_unit" id="editCost" step="0.01" min="0" required />
       </div>
       <div class="modal-buttons">
         <button type="button" id="closeEditItem" class="btn-cancel">Cancel</button>
@@ -276,6 +404,86 @@ $unitMap = [
     </div>
   </div>
 </div>
+
+{{-- ADD INBOUND MODAL --}}
+<div id="addInboundModal" class="modal">
+  <div class="modal-content">
+    <h2><i class="fas fa-arrow-circle-down" style="color:#1a6b47;"></i> Record Inbound</h2>
+    <form action="{{ route('inventory.movement') }}" method="POST" class="form-grid">
+      @csrf
+      <input type="hidden" name="type" value="inbound">
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Product</label>
+        <select name="inventory_item_id" required>
+          <option value="" disabled selected>Select a product</option>
+          @foreach($items as $item)
+            <option value="{{ $item->id }}">{{ $item->product_name }} ({{ $item->category }})</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" step="0.01" min="0.01" required placeholder="e.g. 50" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" />
+      </div>
+      <div class="form-group">
+        <label>Reference / Invoice No.</label>
+        <input type="text" name="reference" placeholder="e.g. INV-2026-001" />
+      </div>
+      <div class="form-group">
+        <label>Remarks</label>
+        <input type="text" name="remarks" placeholder="Optional notes" />
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="closeAddInbound" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-save"><i class="fas fa-save"></i> Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{-- ADD OUTBOUND MODAL --}}
+<div id="addOutboundModal" class="modal">
+  <div class="modal-content">
+    <h2><i class="fas fa-arrow-circle-up" style="color:#c62828;"></i> Record Outbound</h2>
+    <form action="{{ route('inventory.movement') }}" method="POST" class="form-grid">
+      @csrf
+      <input type="hidden" name="type" value="outbound">
+      <div class="form-group" style="grid-column:span 2;">
+        <label>Product</label>
+        <select name="inventory_item_id" required>
+          <option value="" disabled selected>Select a product</option>
+          @foreach($items as $item)
+            <option value="{{ $item->id }}">{{ $item->product_name }} ({{ $item->category }}) — {{ number_format($item->quantity, 2) }} {{ $item->unit }} available</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" name="quantity" step="0.01" min="0.01" required placeholder="e.g. 20" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" />
+      </div>
+      <div class="form-group">
+        <label>Reference</label>
+        <input type="text" name="reference" placeholder="e.g. Batch B-2026-001" />
+      </div>
+      <div class="form-group">
+        <label>Remarks</label>
+        <input type="text" name="remarks" placeholder="Optional notes" />
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="closeAddOutbound" class="btn-cancel">Cancel</button>
+        <button type="submit" class="btn-save"><i class="fas fa-save"></i> Record</button>
+      </div>
+    </form>
+  </div>
+</div>
 @endpush
 
 @push('scripts')
@@ -284,22 +492,154 @@ const cheeseProducts = @json($cheeseProducts);
 const rawMaterials   = @json($rawMaterials);
 const unitMap        = @json($unitMap);
 
-// Auto hide success
 setTimeout(() => document.getElementById('successAlert')?.remove(), 4000);
 
-// Tab switching
+const invColumns = [
+  { key:'product',  label:'Product Name',       default:true  },
+  { key:'category', label:'Category',            default:true  },
+  { key:'start',    label:'Starting Inventory',  default:true  },
+  { key:'inbound',  label:'Inbound',             default:true  },
+  { key:'outbound', label:'Outbound',            default:true  },
+  { key:'end',      label:'Ending Inventory',    default:true  },
+  { key:'unit',     label:'Unit',                default:true  },
+  { key:'cost',     label:'Cost/Unit (₱)',       default:true  },
+  { key:'discrepancy', label:'Discrepancy',      default:true  },
+  { key:'status',   label:'Status',              default:true  },
+  { key:'actions',  label:'Actions',             default:true  },
+];
+
+const colState = {};
+invColumns.forEach(c => colState[c.key] = c.default);
+
+function renderInvTable() {
+  const bar = document.getElementById('colToggleBar');
+  bar.innerHTML = '';
+
+  const activeCount = invColumns.filter(c => colState[c.key] && c.key !== 'actions').length;
+  const countEl = document.getElementById('colActiveCount');
+  if (countEl) countEl.textContent = activeCount;
+
+  invColumns.forEach(col => {
+    const btn = document.createElement('button');
+    btn.className = colState[col.key] ? 'col-on' : '';
+    btn.innerHTML = `<span class="check-icon">${colState[col.key] ? '<i class="fas fa-check" style="font-size:10px;"></i>' : ''}</span> ${col.label}`;
+    btn.onclick = () => { colState[col.key] = !colState[col.key]; renderInvTable(); };
+    bar.appendChild(btn);
+  });
+
+  const header = document.getElementById('invHeaderRow');
+  header.innerHTML = '';
+  invColumns.filter(c => colState[c.key]).forEach(c => {
+    const th = document.createElement('th');
+    th.textContent = c.label;
+    header.appendChild(th);
+  });
+
+  document.querySelectorAll('#invTableBody tr').forEach(row => {
+    row.innerHTML = '';
+    invColumns.filter(c => colState[c.key]).forEach(c => {
+      const td = document.createElement('td');
+      if (c.key === 'status') {
+        const status = row.dataset.status;
+        const cls = status === 'In Stock' ? 'active' : 'inactive';
+        td.innerHTML = `<span class="status-tag ${cls}">${status}</span>`;
+        } else if (c.key === 'discrepancy') {
+  const raw = parseFloat(row.dataset.discrepancyraw);
+  if (raw > 0) {
+    td.innerHTML = `<span style="color:#1a6b47;font-weight:600;">+${row.dataset.discrepancy} (Surplus)</span>`;
+  } else if (raw < 0) {
+    td.innerHTML = `<span style="color:#c62828;font-weight:600;">${row.dataset.discrepancy} (Shortage)</span>`;
+  } else {
+    td.innerHTML = `<span style="color:#888;">0.00 (Matched)</span>`;
+  }
+      } else if (c.key === 'actions') {
+        const canManage = row.dataset.canmanage === '1';
+        if (canManage) {
+          td.className = 'actions-col';
+          td.innerHTML = `
+            <button class="action-btn edit-btn"
+              data-id="${row.dataset.id}"
+              data-name="${row.dataset.name}"
+              data-category="${row.dataset.category}"
+              data-unit="${row.dataset.unitraw}"
+              data-reorder="${row.dataset.reorderraw}"
+              data-cost="${row.dataset.costraw}">
+              <i class="fas fa-pen"></i>
+            </button>
+            <form action="${row.dataset.archiveurl}" method="POST" class="d-inline">
+              <input type="hidden" name="_token" value="{{ csrf_token() }}">
+              <button type="button" class="action-btn archive-btn" title="Archive">
+                <i class="fas fa-archive"></i>
+              </button>
+            </form>`;
+        }
+      } else {
+        td.textContent = row.dataset[c.key] ?? '';
+      }
+      row.appendChild(td);
+    });
+  });
+
+  document.querySelectorAll('#invTableBody .edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const category = this.dataset.category;
+      const name     = this.dataset.name;
+      document.getElementById('editItemForm').action = `/inventory/${this.dataset.id}`;
+      document.getElementById('editCategory').value  = category;
+      document.getElementById('editUnit').value      = this.dataset.unit;
+      document.getElementById('editReorder').value   = this.dataset.reorder;
+      document.getElementById('editCost').value      = this.dataset.cost;
+      filterProducts('edit');
+      document.getElementById('editProduct').value   = name;
+      document.getElementById('editItemModal').classList.add('active');
+      document.body.classList.add('modal-open');
+    });
+  });
+
+  document.querySelectorAll('#invTableBody .archive-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      pendingArchiveForm = this.closest('form');
+      document.getElementById('archiveItemModal').classList.add('active');
+      document.body.classList.add('modal-open');
+    });
+  });
+}
+
+renderInvTable();
+
+document.getElementById('colToggleBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('colDropdown').classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('colDropdown');
+  const btn = document.getElementById('colToggleBtn');
+  if (dropdown && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});
+
 function switchTab(tab) {
   document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
+  document.getElementById('inboundTable').style.display  = tab === 'inbound'  ? 'block' : 'none';
+  document.getElementById('outboundTable').style.display = tab === 'outbound' ? 'block' : 'none';
   document.getElementById('archivedTable').style.display = tab === 'archived' ? 'block' : 'none';
-  document.getElementById('tabActive').classList.toggle('active',   tab === 'active');
-  document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
+  document.querySelectorAll('.inv-tab').forEach(btn => {
+    btn.style.background = 'transparent';
+    btn.style.color      = '#555';
+    btn.style.boxShadow  = 'none';
+  });
+  const activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  activeBtn.style.background = '#1a6b47';
+  activeBtn.style.color      = '#fff';
+  activeBtn.style.boxShadow  = '0 2px 6px rgba(26,107,71,0.25)';
 }
 
 function filterProducts(mode) {
   const category      = document.getElementById(mode + 'Category').value;
   const productSelect = document.getElementById(mode + 'Product');
   productSelect.innerHTML = '<option value="" disabled selected>Select a product</option>';
-  let list = category === 'Cheese Product' ? cheeseProducts : rawMaterials;
+  const list = category === 'Cheese Product' ? cheeseProducts : rawMaterials;
   list.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p;
@@ -313,7 +653,6 @@ function autoFillUnit(mode) {
   if (unitMap[product]) unitSelect.value = unitMap[product];
 }
 
-// Add modal
 document.getElementById('openAddItem')?.addEventListener('click', () => {
   document.getElementById('addItemModal').classList.add('active');
   document.body.classList.add('modal-open');
@@ -323,37 +662,12 @@ document.getElementById('closeAddItem')?.addEventListener('click', () => {
   document.body.classList.remove('modal-open');
 });
 
-// Edit modal
-document.querySelectorAll('.edit-btn').forEach(btn => {
-  btn.addEventListener('click', function () {
-    const id       = this.dataset.id;
-    const category = this.dataset.category;
-    const name     = this.dataset.name;
-    document.getElementById('editItemForm').action = `/inventory/${id}`;
-    document.getElementById('editCategory').value  = category;
-    document.getElementById('editQuantity').value  = this.dataset.quantity;
-    document.getElementById('editUnit').value      = this.dataset.unit;
-    document.getElementById('editReorder').value   = this.dataset.reorder;
-    filterProducts('edit');
-    document.getElementById('editProduct').value = name;
-    document.getElementById('editItemModal').classList.add('active');
-    document.body.classList.add('modal-open');
-  });
-});
 document.getElementById('closeEditItem')?.addEventListener('click', () => {
   document.getElementById('editItemModal').classList.remove('active');
   document.body.classList.remove('modal-open');
 });
 
-// Archive modal
 let pendingArchiveForm = null;
-document.querySelectorAll('.archive-btn').forEach(btn => {
-  btn.addEventListener('click', function () {
-    pendingArchiveForm = this.closest('form');
-    document.getElementById('archiveItemModal').classList.add('active');
-    document.body.classList.add('modal-open');
-  });
-});
 document.getElementById('confirmArchive')?.addEventListener('click', () => {
   pendingArchiveForm?.submit();
 });
@@ -362,7 +676,6 @@ document.getElementById('cancelArchive')?.addEventListener('click', () => {
   document.body.classList.remove('modal-open');
 });
 
-// Delete modal
 let pendingDeleteForm = null;
 document.querySelectorAll('.delete-btn').forEach(btn => {
   btn.addEventListener('click', function () {
@@ -379,11 +692,28 @@ document.getElementById('cancelDelete')?.addEventListener('click', () => {
   document.body.classList.remove('modal-open');
 });
 
-// Search
+document.getElementById('openAddInbound')?.addEventListener('click', () => {
+  document.getElementById('addInboundModal').classList.add('active');
+  document.body.classList.add('modal-open');
+});
+document.getElementById('closeAddInbound')?.addEventListener('click', () => {
+  document.getElementById('addInboundModal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+});
+
+document.getElementById('openAddOutbound')?.addEventListener('click', () => {
+  document.getElementById('addOutboundModal').classList.add('active');
+  document.body.classList.add('modal-open');
+});
+document.getElementById('closeAddOutbound')?.addEventListener('click', () => {
+  document.getElementById('addOutboundModal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+});
+
 document.getElementById('inventorySearch')?.addEventListener('input', function () {
   const q = this.value.toLowerCase();
-  document.querySelectorAll('#inventoryTable tbody tr, #archivedInventoryTable tbody tr').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  document.querySelectorAll('#invTableBody tr').forEach(row => {
+    row.style.display = row.dataset.product?.toLowerCase().includes(q) ? '' : 'none';
   });
 });
 </script>

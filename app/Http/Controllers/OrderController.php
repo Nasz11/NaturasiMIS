@@ -10,17 +10,25 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function index()
-    {
-        $orders = Order::with('createdBy')->latest()->get();
+    public function index(Request $request)
+{
+    $search = $request->get('search');
 
-        $cheeseProducts = [
-            'Burrata', 'Stracciatella', 'Cherry Mozzarella',
-            'Traditional Mozzarella', 'Provola', 'Mozzarella di Latte',
-        ];
+    $orders = Order::with('createdBy')
+        ->when($search, fn($q) => $q->where('po_number', 'like', "%{$search}%")
+            ->orWhere('cheese_product', 'like', "%{$search}%")
+            ->orWhere('status', 'like', "%{$search}%"))
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
 
-        return view('orders.index', compact('orders', 'cheeseProducts'));
-    }
+    $cheeseProducts = [
+        'Burrata', 'Stracciatella', 'Cherry Mozzarella',
+        'Traditional Mozzarella', 'Provola', 'Mozzarella di Latte',
+    ];
+
+    return view('orders.index', compact('orders', 'cheeseProducts', 'search'));
+}
 
     public function preview(Request $request)
     {
@@ -109,15 +117,18 @@ class OrderController extends Controller
         }
 
         foreach ($request->items as $item) {
-            Order::create([
-                'cheese_product' => $item['product'],
-                'quantity'       => $item['quantity'],
-                'unit'           => 'kg',
-                'status'         => 'Confirmed',
-                'created_by'     => auth()->id(),
-                'confirmed_at'   => now(),
-            ]);
-        }
+    $poNumber = 'PO-' . now()->format('Ymd') . '-' . strtoupper(uniqid());
+    Order::create([
+        'po_number'      => $poNumber,
+        'cheese_product' => $item['product'],
+        'quantity'       => $item['quantity'],
+        'unit'           => 'kg',
+        'status'         => 'Confirmed',
+        'notes'          => $request->notes ?? null,
+        'created_by'     => auth()->id(),
+        'confirmed_at'   => now(),
+    ]);
+}
 
         ActivityLog::record('Orders', 'Confirmed Order', 'Production order confirmed and inventory deducted.');
 

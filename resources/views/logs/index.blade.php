@@ -9,10 +9,15 @@
   <div class="module-header">
     <h2><i class="fas fa-list-alt"></i> Activity Log Records</h2>
     <div class="actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="Search user, module, or action..." class="input-search" id="logSearch" value="{{ $search }}" />
-      </div>
+     <form method="GET" action="{{ route('logs.index') }}" style="display:flex;">
+  <input type="hidden" name="module" value="{{ $module }}">
+  <input type="hidden" name="start_date" value="{{ $startDate }}">
+  <input type="hidden" name="end_date" value="{{ $endDate }}">
+  <div class="search-wrapper">
+    <i class="fas fa-search"></i>
+    <input type="text" name="search" placeholder="Search user, module, or action..." class="input-search" value="{{ $search }}" />
+  </div>
+</form>
       <a href="{{ route('logs.index') }}" class="btn-refresh view-audit-btn">
         <i class="fas fa-sync-alt"></i> Refresh
       </a>
@@ -128,12 +133,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
-document.getElementById('logSearch')?.addEventListener('input', function() {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('#logTable tbody tr').forEach(row => {
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
 
 function exportCSV() {
   const table = document.getElementById('logTable');

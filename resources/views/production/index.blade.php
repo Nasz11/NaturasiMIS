@@ -9,10 +9,12 @@
   <div class="module-header">
     <h2><i class="fas fa-industry"></i> Production Batches</h2>
     <div class="actions">
-      <div class="search-wrapper">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="Search by batch number or type..." class="input-search" id="batchSearch" />
-      </div>
+     <form method="GET" action="{{ route('production.index') }}" style="display:flex;">
+  <div class="search-wrapper">
+    <i class="fas fa-search"></i>
+    <input type="text" name="search" placeholder="Search by batch number or type..." class="input-search" value="{{ $search ?? '' }}" />
+  </div>
+</form>
       @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
       <button class="btn-primary" id="openAddBatch">
         <i class="fas fa-plus"></i> Add New Batch
@@ -77,8 +79,9 @@
           @endforelse
         </tbody>
       </table>
-    </div>
-  </div>
+   </div>
+  <div style="margin-top:1rem;">{{ $batches->links() }}</div>
+</div>
 
   {{-- ARCHIVED BATCHES TABLE --}}
   <div id="archivedTable" style="display:none;">
@@ -119,10 +122,11 @@
           </tr>
           @empty
           <tr><td colspan="8" style="text-align:center;padding:2rem;color:#888;">No archived batches.</td></tr>
-          @endforelse
+         @endforelse
         </tbody>
       </table>
     </div>
+    <div style="margin-top:1rem;">{{ $archivedBatches->links() }}</div>
   </div>
 
 {{-- ADD MODAL --}}
@@ -154,11 +158,11 @@
       </div>
       <div class="form-group">
         <label>Status</label>
-        <select name="status">
+        <select name="status" disabled>
           <option value="In Production">In Production</option>
-          <option value="Curing">Curing</option>
-          <option value="Completed">Completed</option>
         </select>
+        <input type="hidden" name="status" value="In Production" />
+        <small style="color:#888;font-size:.75rem;">New batches always start at In Production.</small>
       </div>
       <div class="form-group">
         <label>Remarks</label>
@@ -198,13 +202,14 @@
         <label>Production Date</label>
         <input type="date" name="production_date" id="editDate" required />
       </div>
-      <div class="form-group">
+    <div class="form-group">
         <label>Status</label>
         <select name="status" id="editStatus">
           <option value="In Production">In Production</option>
           <option value="Curing">Curing</option>
           <option value="Completed">Completed</option>
         </select>
+        <small style="color:#888;font-size:.75rem;">Workflow: In Production → Curing → Completed</small>
       </div>
       <div class="form-group">
         <label>Remarks</label>
@@ -242,7 +247,7 @@
   </div>
 </div>
 
-<script>
+<script>  
 // Tab switching
 function switchTab(tab) {
   document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
@@ -263,8 +268,19 @@ document.querySelectorAll('.edit-btn').forEach(btn => {
     document.getElementById('editCheeseType').value  = btn.dataset.type;
     document.getElementById('editQuantity').value    = btn.dataset.qty;
     document.getElementById('editDate').value        = btn.dataset.date;
-    document.getElementById('editStatus').value      = btn.dataset.status;
     document.getElementById('editRemarks').value     = btn.dataset.remarks;
+
+    const currentStatus = btn.dataset.status;
+    const statusSelect = document.getElementById('editStatus');
+    statusSelect.value = currentStatus;
+
+    const workflow = ['In Production', 'Curing', 'Completed'];
+    const currentIndex = workflow.indexOf(currentStatus);
+    Array.from(statusSelect.options).forEach(opt => {
+      const optIndex = workflow.indexOf(opt.value);
+      opt.disabled = optIndex < currentIndex;
+    });
+
     openModal(document.getElementById('editBatchModal'));
   });
 });
@@ -292,14 +308,6 @@ document.querySelectorAll('.delete-btn').forEach(btn => {
 document.getElementById('confirmDeleteBatch')?.addEventListener('click', () => pendingDeleteForm?.submit());
 document.getElementById('cancelDeleteBatch')?.addEventListener('click', () => closeModal(document.getElementById('deleteBatchModal')));
 
-// Search
-document.getElementById('batchSearch')?.addEventListener('input', function () {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('#productionTableBody tr').forEach(row => {
-    if (row.id === 'emptyRow') return;
-    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-});
 </script>
 
 </section>

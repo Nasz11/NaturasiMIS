@@ -52,11 +52,39 @@
     </button>
   </form>
 
-  {{-- CHART --}}
-  <div class="chart-card" style="margin-bottom:2rem;">
-    <h3 style="margin-bottom:1rem;color:#0e472d;">Report Visualization</h3>
-    <canvas id="reportChart" height="120"></canvas>
+ {{-- INSIGHTS CARDS --}}
+<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+  @if($bestSelling)
+  <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
+    <div style="font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;">🏆 Best Selling</div>
+    <div style="font-size:1.2rem;font-weight:700;color:#1a6b47;">{{ $bestSelling->cheese_product }}</div>
+    <div style="font-size:.8rem;color:#888;">{{ number_format($bestSelling->total, 2) }} kg total ordered</div>
   </div>
+  @endif
+  @if($slowMoving)
+  <div style="background:#fff8f0;border-left:4px solid #f57c00;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
+    <div style="font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;">🐢 Slow Moving</div>
+    <div style="font-size:1.2rem;font-weight:700;color:#f57c00;">{{ $slowMoving->product_name }}</div>
+    <div style="font-size:.8rem;color:#888;">{{ number_format($slowMoving->quantity, 2) }} {{ $slowMoving->unit }} remaining</div>
+  </div>
+  @endif
+</div>
+
+{{-- DYNAMIC CHART (hidden for activity report) --}}
+@if($type !== 'activity')
+<div class="chart-card" style="margin-bottom:2rem;">
+  <h3 style="margin-bottom:0.3rem;color:#0e472d;">
+    @if($type === 'inventory') Stock Levels per Product
+    @elseif($type === 'production') Production: This Year vs Last Year
+    @elseif($type === 'orders') Orders: This Year vs Last Year
+    @endif
+  </h3>
+  <small style="color:#888;font-size:0.78rem;">
+    @if($type === 'production' || $type === 'orders') Last 6 months comparison @endif
+  </small>
+  <canvas id="reportChart" height="120" style="margin-top:1rem;"></canvas>
+</div>
+@endif
 
   {{-- TABLE --}}
   <div class="table-container" id="printArea">
@@ -91,14 +119,14 @@
         <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Total Records</div>
         <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">{{ count($reportData) }}</div>
       </div>
-   @if($type === 'inventory' || $type === 'production' || $type === 'orders')
-      <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
-        <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Total Quantity</div>
-        <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">
-          {{ $reportData->sum(fn($r) => (float) filter_var($r['value'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)) }} kg
-        </div>
-      </div>
-      @endif
+ @if($type === 'inventory' || $type === 'production' || $type === 'orders')
+<div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
+  <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Total Quantity</div>
+  <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">
+    {{ number_format($reportData->sum('quantity'), 2) }} kg
+  </div>
+</div>
+@endif
       <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:150px;">
         <div style="font-size:.8rem;color:#666;font-weight:600;text-transform:uppercase;">Report Type</div>
         <div style="font-size:1.8rem;font-weight:700;color:#1a6b47;">{{ ucfirst($type) }}</div>
@@ -106,39 +134,84 @@
     </div>
     @endif
 
-    <table id="reportTable" style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr>
-         <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;font-weight:600;">Date</th>
-<th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;font-weight:600;">Module</th>
-<th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;font-weight:600;">Description</th>
-<th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;font-weight:600;">Value / Quantity</th>
-<th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;font-weight:600;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{-- FIX: use $reportData not $data --}}
-        @forelse($reportData as $row)
-        <tr>
-          <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['date'] }}</td>
-          <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['module'] }}</td>
-          <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['description'] }}</td>
-          <td style="padding:.75rem;border:1px solid #ddd;">{{ $row['value'] }}</td>
-          <td style="padding:.75rem;border:1px solid #ddd;">
-            <span class="status-tag {{ in_array($row['status'], ['In Stock','Completed','Logged','Confirmed']) ? 'active' : 'inactive' }}">
-              {{ $row['status'] }}
-            </span>
-          </td>
-        </tr>
-        @empty
-        <tr>
-          <td colspan="5" style="text-align:center;padding:1.5rem;color:#888;">
-            No data available for this report.
-          </td>
-        </tr>
-        @endforelse
-      </tbody>
-    </table>
+  <table id="reportTable" style="width:100%;border-collapse:collapse;">
+  <thead>
+    <tr>
+      @if($type === 'inventory')
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Product Name</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Category</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Quantity</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Unit</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Reorder Level</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Status</th>
+      @elseif($type === 'production')
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Batch Name</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Product</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Quantity</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Production Date</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Status</th>
+      @elseif($type === 'orders')
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">P.O. Number</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Product</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Quantity</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Unit</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Created By</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Date</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Status</th>
+      @elseif($type === 'activity')
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Date</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">User</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Module</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Action</th>
+        <th style="padding:.75rem;border:1px solid #ddd;background:#f5f5f5;color:#0e472d;">Description</th>
+      @endif
+    </tr>
+  </thead>
+  <tbody>
+    @forelse($reportData as $row)
+    <tr>
+      @if($type === 'inventory')
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->product_name }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->category }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ number_format($row->quantity, 2) }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->unit }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->reorder_level }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">
+          <span class="status-tag {{ $row->status === 'In Stock' ? 'active' : 'inactive' }}">{{ $row->status }}</span>
+        </td>
+      @elseif($type === 'production')
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->batch_number ?? '—' }}</td>
+<td style="padding:.75rem;border:1px solid #ddd;">{{ $row->product_type ?? '—' }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ number_format($row->quantity, 2) }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->production_date }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">
+          <span class="status-tag {{ $row->status === 'Completed' ? 'active' : 'inactive' }}">{{ $row->status }}</span>
+        </td>
+      @elseif($type === 'orders')
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->po_number ?? '—' }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->cheese_product }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ number_format($row->quantity, 2) }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->unit }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->createdBy?->username ?? '—' }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->created_at->format('Y-m-d') }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">
+          <span class="status-tag {{ $row->status === 'Confirmed' ? 'active' : 'inactive' }}">{{ $row->status }}</span>
+        </td>
+      @elseif($type === 'activity')
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->created_at->format('Y-m-d H:i') }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->user?->username ?? '—' }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->module }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->action }}</td>
+        <td style="padding:.75rem;border:1px solid #ddd;">{{ $row->details ?? '—' }}</td>
+      @endif
+    </tr>
+    @empty
+    <tr>
+      <td colspan="7" style="text-align:center;padding:1.5rem;color:#888;">No data available for this report.</td>
+    </tr>
+    @endforelse
+  </tbody>
+</table>
   </div>
 </section>
 
@@ -158,26 +231,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <script>
-// Chart
+// Dynamic Chart
 const ctx = document.getElementById('reportChart');
 if (ctx) {
+  const type = '{{ $type }}';
+  const labels = {!! json_encode($chartLabels) !!};
+  const thisYear = {!! json_encode($chartThisYear) !!};
+  const lastYear = {!! json_encode($chartLastYear) !!};
+
+  const datasets = type === 'inventory'
+    ? [{ label: 'Current Stock', data: thisYear, backgroundColor: 'rgba(26,107,71,0.7)' }]
+    : [
+        { label: '{{ now()->year }}', data: thisYear, backgroundColor: 'rgba(26,107,71,0.7)' },
+        { label: '{{ now()->year - 1 }}', data: lastYear, backgroundColor: 'rgba(180,180,180,0.6)' }
+      ];
+
   new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: {!! json_encode($chartLabels) !!},
-      datasets: [
-        {
-          label: 'Production (kg)',
-          data: {!! json_encode($chartProduction) !!},
-          backgroundColor: 'rgba(26,107,71,0.7)'
-        },
-        {
-          label: 'Inventory (kg)',
-          data: {!! json_encode($chartInventory) !!},
-          backgroundColor: 'rgba(14,71,45,0.5)'
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: true,
@@ -187,17 +258,11 @@ if (ctx) {
   });
 }
 
-// Print — only prints the table area, not the sidebar/nav
-function printReport() {
-  window.print();
-}
+function printReport() { window.print(); }
 
-// Export to PDF using jsPDF + AutoTable
 function exportPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape' });
-
-  // Title
   doc.setFontSize(16);
   doc.text('NaturasiMIS — {{ ucfirst($type) }} Report', 14, 15);
   doc.setFontSize(10);
@@ -205,38 +270,29 @@ function exportPDF() {
   @if($startDate || $endDate)
   doc.text('Date Range: {{ $startDate ?? "..." }} to {{ $endDate ?? "..." }}', 14, 28);
   @endif
-
-  // Table
   const table = document.getElementById('reportTable');
   const headers = [];
-  const rows    = [];
-
-  // Get headers
+  const rows = [];
   table.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
-
-  // Get rows
   table.querySelectorAll('tbody tr').forEach(tr => {
     const cells = [];
     tr.querySelectorAll('td').forEach(td => cells.push(td.innerText.trim()));
-    if (cells.length > 1) rows.push(cells); // skip empty-state row
+    if (cells.length > 1) rows.push(cells);
   });
-
   doc.autoTable({
-    head: [headers],
-    body: rows,
+    head: [headers], body: rows,
     startY: @if($startDate || $endDate) 34 @else 28 @endif,
     styles: { fontSize: 9 },
     headStyles: { fillColor: [14, 71, 45] },
     alternateRowStyles: { fillColor: [240, 248, 244] },
   });
-
   doc.save('{{ $type }}-report-{{ now()->format("Y-m-d") }}.pdf');
 }
 
 function exportCSV() {
   const table = document.getElementById('reportTable');
   let csv = [];
-  table.querySelectorAll('thead th').forEach((th, i, arr) => {
+  table.querySelectorAll('thead th').forEach((th, i) => {
     if (i === 0) csv.push([]);
     csv[0].push('"' + th.innerText.trim() + '"');
   });
@@ -254,4 +310,4 @@ function exportCSV() {
   a.click();
 }
 </script>
-@endpush    
+@endpush

@@ -21,46 +21,57 @@
   {{-- MODULE HEADER --}}
   <div class="module-header">
     <h2><i class="fas fa-clipboard-list"></i> Production Orders</h2>
-    <div class="actions">
-      <button class="btn-primary" id="openCreateOrder">
-        <i class="fas fa-plus"></i> New Order
-      </button>
+   <div class="actions">
+  <form method="GET" action="{{ route('orders.index') }}" style="display:flex;">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" name="search" placeholder="Search by P.O#, product, status..." class="input-search" value="{{ $search ?? '' }}" />
     </div>
-  </div>
+  </form>
+  <button class="btn-primary" id="openCreateOrder">
+    <i class="fas fa-plus"></i> New Order
+  </button>
+</div>
+</div>
 
   {{-- ORDERS TABLE --}}
   <div class="table-container">
     <table id="ordersTable">
       <thead>
         <tr>
-          <th>Cheese Product</th>
-          <th>Quantity</th>
-          <th>Unit</th>
-          <th>Status</th>
-          <th>Created By</th>
-          <th>Confirmed At</th>
+          <th>P.O. Number</th>
+<th>Cheese Product</th>
+<th>Quantity</th>
+<th>Unit</th>
+<th>Status</th>
+<th>Created By</th>
+<th>Date Created</th>
+<th>Confirmed At</th>
         </tr>
       </thead>
       <tbody>
         @forelse($orders as $order)
         <tr>
-          <td>{{ $order->cheese_product }}</td>
-          <td>{{ $order->quantity }}</td>
-          <td>{{ $order->unit }}</td>
-          <td>
-            <span class="status-tag {{ $order->status === 'Confirmed' ? 'active' : 'inactive' }}">
-              {{ $order->status }}
-            </span>
-          </td>
-          <td>{{ $order->createdBy?->username ?? 'N/A' }}</td>
-          <td>{{ $order->confirmed_at ? $order->confirmed_at->format('Y-m-d H:i') : '—' }}</td>
+         <td>{{ $order->po_number ?? '—' }}</td>
+<td>{{ $order->cheese_product }}</td>
+<td>{{ $order->quantity }}</td>
+<td>{{ $order->unit }}</td>
+<td>
+    <span class="status-tag {{ $order->status === 'Confirmed' ? 'active' : 'inactive' }}">
+      {{ $order->status }}
+    </span>
+</td>
+<td>{{ $order->createdBy?->username ?? 'N/A' }}</td>
+<td>{{ $order->created_at->format('Y-m-d') }}</td>
+<td>{{ $order->confirmed_at ? $order->confirmed_at->format('Y-m-d H:i') : '—' }}</td>
         </tr>
         @empty
-        <tr><td colspan="6" style="text-align:center;">No orders yet.</td></tr>
+<tr><td colspan="8" style="text-align:center;">No orders yet.</td></tr>
         @endforelse
       </tbody>
     </table>
-  </div>
+</div>
+  <div style="margin-top:1rem;">{{ $orders->links() }}</div>
 </section>
 @endsection
 

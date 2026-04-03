@@ -7,21 +7,28 @@ use Illuminate\Http\Request;
 
 class ProductionController extends Controller
 {
-    public function index()
-    {
-        $batches = ProductionBatch::with('staff')
-            ->where('is_archived', false)
-            ->orderByDesc('production_date')
-            ->get();
+   public function index(Request $request)
+{
+    $search = $request->get('search');
 
-        $archivedBatches = ProductionBatch::with('staff')
-            ->where('is_archived', true)
-            ->orderByDesc('production_date')
-            ->get();
+    $batches = ProductionBatch::with('staff')
+        ->where('is_archived', false)
+        ->when($search, fn($q) => $q->where('batch_number', 'like', "%{$search}%")
+            ->orWhere('product_type', 'like', "%{$search}%")
+            ->orWhere('status', 'like', "%{$search}%"))
+        ->orderByDesc('production_date')
+        ->paginate(10)
+        ->withQueryString();
 
-        $staff = User::where('status', 'Active')->get();
-        return view('production.index', compact('batches', 'archivedBatches', 'staff'));
-    }
+    $archivedBatches = ProductionBatch::with('staff')
+        ->where('is_archived', true)
+        ->orderByDesc('production_date')
+        ->paginate(10)
+        ->withQueryString();
+
+    $staff = User::where('status', 'Active')->get();
+    return view('production.index', compact('batches', 'archivedBatches', 'staff', 'search'));
+}
 
     public function store(Request $request)
     {
@@ -50,6 +57,15 @@ class ProductionController extends Controller
             'production_date' => 'required|date',
             'status'          => 'required|in:In Production,Curing,Completed',
         ]);
+       // Enforce workflow order
+        $workflow = ['In Production', 'Curing', 'Completed'];
+        $currentIndex = array_search($productionBatch->status, $workflow);
+        $newIndex = array_search($request->status, $workflow);
+
+        if ($newIndex < $currentIndex) {
+            return back()->withErrors(['status' => 'Cannot move batch backwards in the workflow.']);
+        }
+
         $productionBatch->update($request->only(
             'batch_number', 'product_type', 'quantity',
             'production_date', 'status', 'remarks', 'staff_id'

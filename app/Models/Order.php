@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'cheese_product',
-        'quantity',
-        'unit',
-        'status',
-        'created_by',
-        'confirmed_at',
-    ];
+    'po_number',
+    'cheese_product',
+    'quantity',
+    'unit',
+    'status',
+    'notes',
+    'created_by',
+    'confirmed_at',
+];
 
     protected $casts = [
         'confirmed_at' => 'datetime',

@@ -37,7 +37,7 @@
       </div>
 
       <div class="notifications">
-        <h3>Recent Notifications</h3>
+        <h3>Recent Activity</h3>
         <ul>
           @forelse($recentNotifications as $log)
             <li>
