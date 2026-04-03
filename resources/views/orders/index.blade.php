@@ -92,7 +92,23 @@
       </tbody>
     </table>
 </div>
-  <div style="margin-top:1rem;">{{ $orders->links() }}</div>
+ <div class="pagination-wrapper">
+    <p class="pagination-info">Showing {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} of {{ $orders->total() }} orders</p>
+    <div class="custom-pagination-nav">
+      @if($orders->onFirstPage()) <span class="pg-btn pg-disabled">&#8249;</span>
+      @else <a href="{{ $orders->previousPageUrl() }}" class="pg-btn">&#8249;</a> @endif
+      @php $current=$orders->currentPage(); $last=$orders->lastPage(); $pages=[]; for($i=1;$i<=$last;$i++){if($i==1||$i==$last||abs($i-$current)<=1)$pages[]=$i;} $pages=array_unique($pages); sort($pages); @endphp
+      @php $prev=null; @endphp
+      @foreach($pages as $page)
+        @if($prev!==null && $page-$prev>1) <span class="pg-btn pg-dots">···</span> @endif
+        @if($page==$current) <span class="pg-btn pg-active">{{ $page }}</span>
+        @else <a href="{{ $orders->url($page) }}" class="pg-btn">{{ $page }}</a> @endif
+        @php $prev=$page; @endphp
+      @endforeach
+      @if($orders->hasMorePages()) <a href="{{ $orders->nextPageUrl() }}" class="pg-btn">&#8250;</a>
+      @else <span class="pg-btn pg-disabled">&#8250;</span> @endif
+    </div>
+  </div>
 </section>
 @endsection
 

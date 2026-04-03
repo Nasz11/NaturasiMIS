@@ -80,7 +80,23 @@
         </tbody>
       </table>
    </div>
-  <div style="margin-top:1rem;">{{ $batches->links() }}</div>
+ <div class="pagination-wrapper">
+    <p class="pagination-info">Showing {{ $batches->firstItem() ?? 0 }}–{{ $batches->lastItem() ?? 0 }} of {{ $batches->total() }} batches</p>
+    <div class="custom-pagination-nav">
+      @if($batches->onFirstPage()) <span class="pg-btn pg-disabled">&#8249;</span>
+      @else <a href="{{ $batches->previousPageUrl() }}" class="pg-btn">&#8249;</a> @endif
+      @php $current=$batches->currentPage(); $last=$batches->lastPage(); $pages=[]; for($i=1;$i<=$last;$i++){if($i==1||$i==$last||abs($i-$current)<=1)$pages[]=$i;} $pages=array_unique($pages); sort($pages); @endphp
+      @php $prev=null; @endphp
+      @foreach($pages as $page)
+        @if($prev!==null && $page-$prev>1) <span class="pg-btn pg-dots">···</span> @endif
+        @if($page==$current) <span class="pg-btn pg-active">{{ $page }}</span>
+        @else <a href="{{ $batches->url($page) }}" class="pg-btn">{{ $page }}</a> @endif
+        @php $prev=$page; @endphp
+      @endforeach
+      @if($batches->hasMorePages()) <a href="{{ $batches->nextPageUrl() }}" class="pg-btn">&#8250;</a>
+      @else <span class="pg-btn pg-disabled">&#8250;</span> @endif
+    </div>
+  </div>
 </div>
 
   {{-- ARCHIVED BATCHES TABLE --}}
@@ -126,7 +142,23 @@
         </tbody>
       </table>
     </div>
-    <div style="margin-top:1rem;">{{ $archivedBatches->links() }}</div>
+   <div class="pagination-wrapper">
+      <p class="pagination-info">Showing {{ $archivedBatches->firstItem() ?? 0 }}–{{ $archivedBatches->lastItem() ?? 0 }} of {{ $archivedBatches->total() }} batches</p>
+      <div class="custom-pagination-nav">
+        @if($archivedBatches->onFirstPage()) <span class="pg-btn pg-disabled">&#8249;</span>
+        @else <a href="{{ $archivedBatches->previousPageUrl() }}" class="pg-btn">&#8249;</a> @endif
+        @php $current=$archivedBatches->currentPage(); $last=$archivedBatches->lastPage(); $pages=[]; for($i=1;$i<=$last;$i++){if($i==1||$i==$last||abs($i-$current)<=1)$pages[]=$i;} $pages=array_unique($pages); sort($pages); @endphp
+        @php $prev=null; @endphp
+        @foreach($pages as $page)
+          @if($prev!==null && $page-$prev>1) <span class="pg-btn pg-dots">···</span> @endif
+          @if($page==$current) <span class="pg-btn pg-active">{{ $page }}</span>
+          @else <a href="{{ $archivedBatches->url($page) }}" class="pg-btn">{{ $page }}</a> @endif
+          @php $prev=$page; @endphp
+        @endforeach
+        @if($archivedBatches->hasMorePages()) <a href="{{ $archivedBatches->nextPageUrl() }}" class="pg-btn">&#8250;</a>
+        @else <span class="pg-btn pg-disabled">&#8250;</span> @endif
+      </div>
+    </div>
   </div>
 
 {{-- ADD MODAL --}}
