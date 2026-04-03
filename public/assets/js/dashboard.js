@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
       dropdown?.classList.add("show");
       adminTrigger.classList.add("active");
     }
-  });
+  }); 
 
   document.addEventListener("click", (e) => {
     if (!adminTrigger?.contains(e.target) && !dropdown?.contains(e.target)) {

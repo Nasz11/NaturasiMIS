@@ -243,9 +243,6 @@
 </div>
 
 <script>
-const openModal  = (m) => { m?.classList.add('active'); document.body.classList.add('modal-open'); };
-const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
-
 // Tab switching
 function switchTab(tab) {
   document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
