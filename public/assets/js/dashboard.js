@@ -36,10 +36,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const adminTrigger = document.querySelector(".admin-trigger");
   const dropdown = document.querySelector(".dropdown");
 
-  adminTrigger?.addEventListener("click", (e) => {
+ adminTrigger?.addEventListener("click", (e) => {
     e.stopPropagation();
-    dropdown?.classList.toggle("show");
-    adminTrigger.classList.toggle("active");
+    const isOpen = dropdown?.classList.contains("show");
+    document.querySelectorAll(".dropdown.show").forEach(d => d.classList.remove("show"));
+    document.querySelectorAll(".admin-trigger.active").forEach(t => t.classList.remove("active"));
+    if (!isOpen) {
+      dropdown?.classList.add("show");
+      adminTrigger.classList.add("active");
+    }
   });
 
   document.addEventListener("click", (e) => {
