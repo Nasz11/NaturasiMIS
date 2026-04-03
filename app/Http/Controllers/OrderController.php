@@ -134,4 +134,16 @@ class OrderController extends Controller
 
         return back()->with('success', 'Order confirmed! Inventory has been updated.');
     }
+    public function updateStatus(Request $request, Order $order)
+{
+    $request->validate(['status' => 'required|in:Confirmed,Cancelled']);
+
+    $order->status = $request->status;
+    $order->confirmed_at = $request->status === 'Confirmed' ? now() : null;
+    $order->save();
+
+    ActivityLog::record('Orders', 'Updated Order Status', "Order {$order->po_number} marked as {$request->status}.");
+
+    return back()->with('success', "Order {$order->po_number} has been {$request->status}.");
+}
 }

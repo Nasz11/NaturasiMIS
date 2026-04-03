@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::post('/orders/preview', [OrderController::class, 'preview'])->name('orders.preview');
     Route::post('/orders/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');
+    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
     Route::middleware(['role:admin'])->group(function () {

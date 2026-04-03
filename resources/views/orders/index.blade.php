@@ -47,6 +47,7 @@
 <th>Created By</th>
 <th>Date Created</th>
 <th>Confirmed At</th>
+<th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -64,6 +65,26 @@
 <td>{{ $order->createdBy?->username ?? 'N/A' }}</td>
 <td>{{ $order->created_at->format('Y-m-d') }}</td>
 <td>{{ $order->confirmed_at ? $order->confirmed_at->format('Y-m-d H:i') : '—' }}</td>
+<td>
+  @if($order->status === 'Pending')
+    <form method="POST" action="{{ route('orders.updateStatus', $order) }}" style="display:inline;">
+      @csrf @method('PATCH')
+      <input type="hidden" name="status" value="Confirmed">
+      <button type="submit" class="btn-primary" style="padding:6px 12px; font-size:0.8rem;">
+        <i class="fas fa-check"></i> Confirm
+      </button>
+    </form>
+    <form method="POST" action="{{ route('orders.updateStatus', $order) }}" style="display:inline; margin-left:4px;">
+      @csrf @method('PATCH')
+      <input type="hidden" name="status" value="Cancelled">
+      <button type="submit" class="btn-cancel" style="padding:6px 12px; font-size:0.8rem;">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </form>
+  @else
+    <span style="color:#aaa; font-size:0.85rem;">—</span>
+  @endif
+</td>
         </tr>
         @empty
 <tr><td colspan="8" style="text-align:center;">No orders yet.</td></tr>
