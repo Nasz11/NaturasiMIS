@@ -13,8 +13,9 @@ class InventoryController extends Controller
     $date = $request->get('date', now()->toDateString());
     $selectedDate = \Carbon\Carbon::parse($date);
 
-    $items = InventoryItem::with(['updatedBy', 'movements'])
+   $items = InventoryItem::with(['updatedBy', 'movements'])
         ->where('is_archived', false)
+        ->where('category', 'Raw Materials')
         ->get()
         ->each(function ($item) {
             $computed = $item->computedQuantity();

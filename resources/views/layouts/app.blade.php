@@ -42,11 +42,6 @@
             <i class="fas fa-industry"></i> Production</a></li>
           @endif
 
-          @if(in_array('batches', $allowed))
-          <li><a href="{{ route('batches.index') }}" class="{{ request()->routeIs('batches.*') ? 'active' : '' }}">
-            <i class="fas fa-clipboard-list"></i> Batches</a></li>
-          @endif
-
           @if(in_array('reports', $allowed))
           <li><a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">
             <i class="fas fa-chart-line"></i> Reports</a></li>

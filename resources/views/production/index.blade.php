@@ -10,17 +10,56 @@
     <h2><i class="fas fa-industry"></i> Production Batches</h2>
     <div class="actions">
      <form method="GET" action="{{ route('production.index') }}" style="display:flex;">
+  <input type="hidden" name="tab" id="productionTabInput" value="active">
   <div class="search-wrapper">
     <i class="fas fa-search"></i>
     <input type="text" name="search" placeholder="Search by batch number or type..." class="input-search" value="{{ $search ?? '' }}" />
-  </div>
+  </div>  
 </form>
-      @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
-      <button class="btn-primary" id="openAddBatch">
-        <i class="fas fa-plus"></i> Add New Batch
-      </button>
-      @endif
     </div>
+  </div>
+
+ {{-- TODAY'S ORDERS SUMMARY --}}
+  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+      <p style="font-size:1rem; font-weight:600; color:#1a6b47; margin:0;"><i class="fas fa-clipboard-list"></i> Today's Confirmed Orders — {{ now()->format('F d, Y') }}</p>
+      <span style="background:#e8f5e9; color:#1a6b47; font-size:0.75rem; font-weight:600; padding:4px 12px; border-radius:99px;">{{ $todayOrders->count() }} product(s)</span>
+    </div>
+    @if($todayOrders->isEmpty())
+      <div style="text-align:center; padding:2rem; color:#888;">
+        <i class="fas fa-clipboard" style="font-size:2rem; color:#ccc; margin-bottom:0.5rem; display:block;"></i>
+        <p style="margin:0;">No confirmed orders for today yet.</p>
+      </div>
+    @else
+    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+      @foreach($todayOrders as $product => $data)
+      <div style="display:flex; align-items:center; justify-content:space-between; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:0.9rem 1.1rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div style="background:#e8f5e9; border-radius:8px; padding:0.5rem;">
+            <i class="fas fa-cheese" style="color:#1a6b47;"></i>
+          </div>
+          <div>
+            <p style="margin:0; font-weight:600; color:#1a1a1a;">{{ $product }}</p>
+            <p style="margin:0; font-size:0.78rem; color:#888;">{{ number_format($data['total_pcs'], 0) }} pcs · {{ number_format($data['total_kg'], 2) }} kg · {{ $data['clients'] }} {{ Str::plural('client', $data['clients']) }}</p>
+          </div>
+        </div>
+       @if(auth()->user()->role === 'admin' || auth()->user()->role === 'production')
+          @if(in_array($product, $todayBatchProducts))
+            <span style="background:#e8f5e9; color:#1a6b47; font-size:0.78rem; font-weight:600; padding:6px 14px; border-radius:99px;">
+              <i class="fas fa-check"></i> Batch Started
+            </span>
+          @else
+            <button class="btn-primary start-batch-btn" style="font-size:0.8rem; padding:6px 16px; white-space:nowrap;"
+              data-product="{{ $product }}"
+              data-qty="{{ number_format($data['total_kg'], 2) }}">
+              <i class="fas fa-play"></i> Start Batch
+            </button>
+          @endif
+        @endif
+      </div>
+      @endforeach
+    </div>
+    @endif
   </div>
 
   {{-- TABS --}}
@@ -161,45 +200,95 @@
     </div>
   </div>
 
+<script>  
+// Tab switching
+function switchTab(tab) {
+  document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
+  document.getElementById('archivedTable').style.display = tab === 'archived' ? 'block' : 'none';
+  document.getElementById('tabActive').classList.toggle('active',   tab === 'active');
+  document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
+  document.getElementById('productionTabInput').value = tab;
+}
+
+// Edit modal
+document.querySelectorAll('.edit-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('editBatchForm').action = `/production/${btn.dataset.id}`;
+    document.getElementById('editBatchNumber').value = btn.dataset.batch;
+    document.getElementById('editCheeseType').value = btn.dataset.type;
+    document.getElementById('editQuantity').value    = btn.dataset.qty;
+    document.getElementById('editDate').value        = btn.dataset.date;
+    document.getElementById('editRemarks').value     = btn.dataset.remarks;
+
+    const currentStatus = btn.dataset.status;
+    const statusSelect = document.getElementById('editStatus');
+    statusSelect.value = currentStatus;
+
+    const workflow = ['In Production', 'Curing', 'Completed'];
+    const currentIndex = workflow.indexOf(currentStatus);
+    Array.from(statusSelect.options).forEach(opt => {
+      const optIndex = workflow.indexOf(opt.value);
+      opt.disabled = optIndex < currentIndex;
+    });
+
+    openModal(document.getElementById('editBatchModal'));
+  });
+});
+document.getElementById('closeEditBatch')?.addEventListener('click', () => closeModal(document.getElementById('editBatchModal')));
+document.getElementById('closeAddBatch')?.addEventListener('click', () => closeModal(document.getElementById('addBatchModal')));
+
+// Archive modal
+let pendingArchiveForm = null;
+document.querySelectorAll('.archive-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    pendingArchiveForm = btn.closest('form');
+    openModal(document.getElementById('archiveBatchModal'));
+  });
+});
+document.getElementById('confirmArchiveBatch')?.addEventListener('click', () => pendingArchiveForm?.submit());
+document.getElementById('cancelArchiveBatch')?.addEventListener('click', () => closeModal(document.getElementById('archiveBatchModal')));
+
+// Delete modal
+let pendingDeleteForm = null;
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    pendingDeleteForm = btn.closest('.delete-form');
+    openModal(document.getElementById('deleteBatchModal'));
+  });
+});
+document.getElementById('confirmDeleteBatch')?.addEventListener('click', () => pendingDeleteForm?.submit());
+document.getElementById('cancelDeleteBatch')?.addEventListener('click', () => closeModal(document.getElementById('deleteBatchModal')));
+
+document.querySelectorAll('.start-batch-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    document.querySelector('#addBatchModal [name="product_type"]').value = btn.dataset.product;
+    document.querySelector('#addBatchModal [name="quantity"]').value = btn.dataset.qty;
+    document.querySelector('#addBatchModal [name="production_date"]').value = '{{ now()->format("Y-m-d") }}';
+    const res = await fetch('{{ route("production.nextBatchNumber") }}');
+    const data = await res.json();
+    document.querySelector('#addBatchModal [name="batch_number"]').value = data.batch_number;
+    openModal(document.getElementById('addBatchModal'));
+  });
+});
+</script>
+
+</section>
+
+@endsection
+
+@push('modals')
 {{-- ADD MODAL --}}
-<div id="addBatchModal" class="modal">    
+<div id="addBatchModal" class="modal">
   <div class="modal-content">
     <h2>Add New Production Batch</h2>
     <form action="{{ route('production.store') }}" method="POST" class="form-grid">
       @csrf
-      <div class="form-group">
-        <label>Batch Number</label>
-        <input type="text" name="batch_number" placeholder="e.g., B-2025-003" required />
-      </div>
-      <div class="form-group">
-        <label>Product / Cheese Type</label>
-        <select name="product_type" required>
-          <option value="">Select cheese type</option>
-          @foreach(['Burrata','Stracciatella','Cherry Mozzarella','Traditional Mozzarella','Provola','Mozzarella di Latte'] as $t)
-            <option value="{{ $t }}">{{ $t }}</option>
-          @endforeach
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Quantity Produced (kg)</label>
-        <input type="number" name="quantity" step="0.01" min="0.01" placeholder="e.g., 100" required />
-      </div>
-      <div class="form-group">
-        <label>Production Date</label>
-        <input type="date" name="production_date" required />
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select name="status" disabled>
-          <option value="In Production">In Production</option>
-        </select>
-        <input type="hidden" name="status" value="In Production" />
-        <small style="color:#888;font-size:.75rem;">New batches always start at In Production.</small>
-      </div>
-      <div class="form-group">
-        <label>Remarks</label>
-        <input type="text" name="remarks" placeholder="Optional notes" />
-      </div>
+      <div class="form-group"><label>Batch Number</label><input type="text" name="batch_number" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Product / Cheese Type</label><input type="text" name="product_type" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Quantity Produced (kg)</label><input type="number" name="quantity" step="0.01" min="0.01" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Production Date</label><input type="date" name="production_date" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Status</label><select name="status" disabled><option value="In Production">In Production</option></select><input type="hidden" name="status" value="In Production" /><small style="color:#888;font-size:.75rem;">New batches always start at In Production.</small></div>
+      <div class="form-group"><label>Remarks</label><input type="text" name="remarks" placeholder="Optional notes" /></div>
       <div class="modal-buttons">
         <button type="button" id="closeAddBatch" class="btn-cancel">Cancel</button>
         <button type="submit" class="btn-save"><i class="fas fa-plus"></i> Add Batch</button>
@@ -214,27 +303,11 @@
     <h2>Edit Batch</h2>
     <form id="editBatchForm" action="" method="POST" class="form-grid">
       @csrf @method('PUT')
+      <div class="form-group"><label>Batch Number</label><input type="text" name="batch_number" id="editBatchNumber" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Product / Cheese Type</label><input type="text" name="product_type" id="editCheeseType" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Quantity (kg)</label><input type="number" name="quantity" id="editQuantity" step="0.01" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
+      <div class="form-group"><label>Production Date</label><input type="date" name="production_date" id="editDate" required readonly style="background:#f3f4f6;cursor:not-allowed;" /></div>
       <div class="form-group">
-        <label>Batch Number</label>
-        <input type="text" name="batch_number" id="editBatchNumber" required />
-      </div>
-      <div class="form-group">
-        <label>Product / Cheese Type</label>
-        <select name="product_type" id="editCheeseType" required>
-          @foreach(['Burrata','Stracciatella','Cherry Mozzarella','Traditional Mozzarella','Provola','Mozzarella di Latte'] as $t)
-            <option value="{{ $t }}">{{ $t }}</option>
-          @endforeach
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Quantity (kg)</label>
-        <input type="number" name="quantity" id="editQuantity" step="0.01" required />
-      </div>
-      <div class="form-group">
-        <label>Production Date</label>
-        <input type="date" name="production_date" id="editDate" required />
-      </div>
-    <div class="form-group">
         <label>Status</label>
         <select name="status" id="editStatus">
           <option value="In Production">In Production</option>
@@ -243,10 +316,7 @@
         </select>
         <small style="color:#888;font-size:.75rem;">Workflow: In Production → Curing → Completed</small>
       </div>
-      <div class="form-group">
-        <label>Remarks</label>
-        <input type="text" name="remarks" id="editRemarks" />
-      </div>
+      <div class="form-group"><label>Remarks</label><input type="text" name="remarks" id="editRemarks" /></div>
       <div class="modal-buttons">
         <button type="button" id="closeEditBatch" class="btn-cancel">Cancel</button>
         <button type="submit" class="btn-save">Save Changes</button>
@@ -274,73 +344,8 @@
     <p>Are you sure you want to permanently delete this batch? This cannot be undone.</p>
     <div class="modal-buttons">
       <button class="btn-cancel" id="cancelDeleteBatch">Cancel</button>
-     <button class="btn-delete" id="confirmDeleteBatch"><i class="fas fa-trash"></i> Delete</button>
+      <button class="btn-delete" id="confirmDeleteBatch"><i class="fas fa-trash"></i> Delete</button>
     </div>
   </div>
 </div>
-
-<script>  
-// Tab switching
-function switchTab(tab) {
-  document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
-  document.getElementById('archivedTable').style.display = tab === 'archived' ? 'block' : 'none';
-  document.getElementById('tabActive').classList.toggle('active',   tab === 'active');
-  document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
-}
-
-// Add modal
-document.getElementById('openAddBatch')?.addEventListener('click', () => openModal(document.getElementById('addBatchModal')));
-document.getElementById('closeAddBatch')?.addEventListener('click', () => closeModal(document.getElementById('addBatchModal')));
-
-// Edit modal
-document.querySelectorAll('.edit-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.getElementById('editBatchForm').action = `/production/${btn.dataset.id}`;
-    document.getElementById('editBatchNumber').value = btn.dataset.batch;
-    document.getElementById('editCheeseType').value  = btn.dataset.type;
-    document.getElementById('editQuantity').value    = btn.dataset.qty;
-    document.getElementById('editDate').value        = btn.dataset.date;
-    document.getElementById('editRemarks').value     = btn.dataset.remarks;
-
-    const currentStatus = btn.dataset.status;
-    const statusSelect = document.getElementById('editStatus');
-    statusSelect.value = currentStatus;
-
-    const workflow = ['In Production', 'Curing', 'Completed'];
-    const currentIndex = workflow.indexOf(currentStatus);
-    Array.from(statusSelect.options).forEach(opt => {
-      const optIndex = workflow.indexOf(opt.value);
-      opt.disabled = optIndex < currentIndex;
-    });
-
-    openModal(document.getElementById('editBatchModal'));
-  });
-});
-document.getElementById('closeEditBatch')?.addEventListener('click', () => closeModal(document.getElementById('editBatchModal')));
-
-// Archive modal
-let pendingArchiveForm = null;
-document.querySelectorAll('.archive-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    pendingArchiveForm = btn.closest('form');
-    openModal(document.getElementById('archiveBatchModal'));
-  });
-});
-document.getElementById('confirmArchiveBatch')?.addEventListener('click', () => pendingArchiveForm?.submit());
-document.getElementById('cancelArchiveBatch')?.addEventListener('click', () => closeModal(document.getElementById('archiveBatchModal')));
-
-// Delete modal
-let pendingDeleteForm = null;
-document.querySelectorAll('.delete-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    pendingDeleteForm = btn.closest('.delete-form');
-    openModal(document.getElementById('deleteBatchModal'));
-  });
-});
-document.getElementById('confirmDeleteBatch')?.addEventListener('click', () => pendingDeleteForm?.submit());
-document.getElementById('cancelDeleteBatch')?.addEventListener('click', () => closeModal(document.getElementById('deleteBatchModal')));
-
-</script>
-
-</section>
-@endsection 
+@endpush

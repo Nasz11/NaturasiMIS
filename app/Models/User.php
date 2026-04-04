@@ -23,24 +23,22 @@ class User extends Authenticatable
         'two_factor_enabled'    => 'boolean',
     ];
 
-    // Role helpers
     public function isAdmin(): bool      { return $this->role === 'admin'; }
     public function isInventory(): bool  { return $this->role === 'inventory'; }
     public function isProduction(): bool { return $this->role === 'production'; }
     public function isManager(): bool    { return $this->role === 'manager'; }
 
-    // Permissions map
     public function permissions(): array
     {
         $map = [
             'admin' => [
                 'manageUsers', 'assignRoles', 'accessDashboard', 'manageInventory',
-                'manageProduction', 'manageBatches', 'viewReports', 'viewAuditLogs',
+                'manageProduction', 'viewReports', 'viewAuditLogs',
                 'editSystemConfig', 'deleteRecords', 'overrideErrors',
             ],
-            'inventory' => ['accessDashboard', 'manageInventory', 'viewReports'],
-            'production' => ['accessDashboard', 'manageProduction', 'manageBatches', 'viewReports'],
-            'manager'  => ['accessDashboard', 'viewReports', 'manageBatches'],
+            'inventory'  => ['accessDashboard', 'manageInventory', 'viewReports'],
+            'production' => ['accessDashboard', 'manageProduction', 'viewReports'],
+           'manager'    => ['accessDashboard', 'viewReports', 'viewInventory', 'viewProduction', 'viewOrders'],
         ];
         return $map[$this->role] ?? [];
     }
@@ -53,22 +51,17 @@ class User extends Authenticatable
     public function allowedPages(): array
     {
         $map = [
-    'admin'      => ['dashboard', 'inventory', 'production', 'batches', 'reports', 'orders', 'users', 'settings', 'logs'],
-   'inventory'  => ['dashboard', 'inventory', 'reports', 'orders'],
-'production' => ['dashboard', 'production', 'batches', 'reports'],
-    'manager'    => ['dashboard', 'batches', 'reports'],
-];
+            'admin'      => ['dashboard', 'inventory', 'production', 'reports', 'orders', 'users', 'settings', 'logs'],
+            'inventory'  => ['dashboard', 'inventory', 'reports', 'orders'],
+            'production' => ['dashboard', 'production', 'reports'],
+            'manager'    => ['dashboard', 'inventory', 'production', 'reports', 'orders'],
+        ];
         return $map[$this->role] ?? [];
     }
 
     public function productionBatches()
     {
         return $this->hasMany(ProductionBatch::class, 'staff_id');
-    }
-
-    public function batches()
-    {
-        return $this->hasMany(Batch::class, 'staff_id');
     }
 
     public function activityLogs()

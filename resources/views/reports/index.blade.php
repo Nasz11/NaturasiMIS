@@ -62,10 +62,10 @@
   </div>
   @endif
   @if($slowMoving)
-  <div style="background:#fff8f0;border-left:4px solid #f57c00;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
+ <div style="background:#fff8f0;border-left:4px solid #f57c00;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
     <div style="font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;">🐢 Slow Moving</div>
-    <div style="font-size:1.2rem;font-weight:700;color:#f57c00;">{{ $slowMoving->product_name }}</div>
-    <div style="font-size:.8rem;color:#888;">{{ number_format($slowMoving->quantity, 2) }} {{ $slowMoving->unit }} remaining</div>
+    <div style="font-size:1.2rem;font-weight:700;color:#f57c00;">{{ $slowMoving->cheese_product }}</div>
+    <div style="font-size:.8rem;color:#888;">{{ number_format($slowMoving->total, 2) }} kg total ordered</div>
   </div>
   @endif
 </div>

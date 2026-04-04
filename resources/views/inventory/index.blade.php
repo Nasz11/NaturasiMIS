@@ -4,10 +4,7 @@
 @section('page-subtitle', 'Manage all product and material stocks efficiently.')
 
 @php
-$cheeseProducts = [
-    'Burrata', 'Stracciatella', 'Cherry Mozzarella',
-    'Traditional Mozzarella', 'Provola', 'Mozzarella di Latte',
-];
+
 $rawMaterials = [
     'Cagliata', 'Fresh Milk', 'Cream', 'Iodized Salt', 'Rock Salt',
     'Trisodium', 'Rennet', 'Citric Acid', 'Palm Oil', 'Skimmed Milk',
@@ -15,9 +12,6 @@ $rawMaterials = [
     'Cheddar Flavor', 'Milk Powder',
 ];
 $unitMap = [
-    'Burrata'                => 'kg', 'Stracciatella'          => 'kg',
-    'Cherry Mozzarella'      => 'kg', 'Traditional Mozzarella' => 'kg',
-    'Provola'                => 'kg', 'Mozzarella di Latte'    => 'kg',
     'Cagliata'               => 'kg', 'Fresh Milk'             => 'L',
     'Cream'                  => 'L',  'Iodized Salt'           => 'kg',
     'Rock Salt'              => 'kg', 'Trisodium'              => 'kg',
@@ -46,7 +40,7 @@ $unitMap = [
         <input type="text" placeholder="Search by product name..." class="input-search" id="inventorySearch" />
       </div>
       @if(auth()->user()->can('manageInventory'))
-      <button class="btn-primary" id="openAddItem">
+      <button class="btn-primary" id="openAddItem" style="display:none;">
         <i class="fas fa-plus"></i> Add New Item
       </button>
       @endif
@@ -295,14 +289,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
     <h2>Add New Item</h2>
     <form action="{{ route('inventory.store') }}" method="POST" class="form-grid">
       @csrf
-      <div class="form-group" style="grid-column: span 2;">
-        <label>Category</label>
-        <select name="category" id="addCategory" required onchange="filterProducts('add')">
-          <option value="" disabled selected>Select a category</option>
-          <option value="Cheese Product">Cheese Product</option>
-          <option value="Raw Materials">Raw Materials</option>
-        </select>
-      </div>
+     <input type="hidden" name="category" value="Raw Materials">
       <div class="form-group" style="grid-column: span 2;">
         <label>Product Name</label>
         <select name="product_name" id="addProduct" required onchange="autoFillUnit('add')">
@@ -341,14 +328,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
     <h2>Edit Inventory Item</h2>
     <form id="editItemForm" action="" method="POST" class="form-grid">
       @csrf @method('PUT')
-      <div class="form-group" style="grid-column: span 2;">
-        <label>Category</label>
-        <select name="category" id="editCategory" required onchange="filterProducts('edit')">
-          <option value="" disabled selected>Select a category</option>
-          <option value="Cheese Product">Cheese Product</option>
-          <option value="Raw Materials">Raw Materials</option>
-        </select>
-      </div>
+     <input type="hidden" name="category" id="editCategory" value="Raw Materials">
       <div class="form-group" style="grid-column: span 2;">
         <label>Product Name</label>
         <select name="product_name" id="editProduct" required onchange="autoFillUnit('edit')">
@@ -488,7 +468,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
 
 @push('scripts')
 <script>
-const cheeseProducts = @json($cheeseProducts);
+
 const rawMaterials   = @json($rawMaterials);
 const unitMap        = @json($unitMap);
 
@@ -629,18 +609,25 @@ function switchTab(tab) {
     btn.style.color      = '#555';
     btn.style.boxShadow  = 'none';
   });
-  const activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+ const activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
   activeBtn.style.background = '#1a6b47';
   activeBtn.style.color      = '#fff';
   activeBtn.style.boxShadow  = '0 2px 6px rgba(26,107,71,0.25)';
+
+ const addBtn = document.getElementById('openAddItem');
+  if (addBtn) addBtn.style.display = tab === 'active' ? 'inline-flex' : 'none';
+
+  const colBtn = document.getElementById('colToggleBtn');
+  if (colBtn) colBtn.style.display = tab === 'active' ? 'inline-flex' : 'none';
+
+  const datePicker = document.querySelector('#inventorySection form[action]');
+  if (datePicker) datePicker.style.display = tab === 'active' ? 'flex' : 'none';
 }
 
 function filterProducts(mode) {
-  const category      = document.getElementById(mode + 'Category').value;
   const productSelect = document.getElementById(mode + 'Product');
   productSelect.innerHTML = '<option value="" disabled selected>Select a product</option>';
-  const list = category === 'Cheese Product' ? cheeseProducts : rawMaterials;
-  list.forEach(p => {
+  rawMaterials.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p;
     productSelect.appendChild(opt);
@@ -654,6 +641,7 @@ function autoFillUnit(mode) {
 }
 
 document.getElementById('openAddItem')?.addEventListener('click', () => {
+  filterProducts('add');
   document.getElementById('addItemModal').classList.add('active');
   document.body.classList.add('modal-open');
 });

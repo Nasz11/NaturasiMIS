@@ -40,8 +40,8 @@ class ReportsController extends Controller
                 $chartThisYear[] = (float) Order::whereYear('created_at', $month->year)->whereMonth('created_at', $month->month)->sum('quantity');
                 $chartLastYear[] = (float) Order::whereYear('created_at', $month->year - 1)->whereMonth('created_at', $month->month)->sum('quantity');
             }
-        } elseif ($type === 'inventory') {
-            $items = InventoryItem::where('is_archived', false)->get();
+       } elseif ($type === 'inventory') {
+            $items = InventoryItem::where('is_archived', false)->where('category', 'Raw Materials')->get();
             foreach ($items as $item) {
                 $chartLabels[]   = $item->product_name;
                 $chartThisYear[] = (float) $item->quantity;
@@ -49,13 +49,14 @@ class ReportsController extends Controller
             }
         }
 
-        $bestSelling = Order::selectRaw('cheese_product, SUM(quantity) as total')
+       $bestSelling = \App\Models\OrderItem::selectRaw('cheese_product, SUM(total_kg) as total')
             ->groupBy('cheese_product')
             ->orderByDesc('total')
             ->first();
 
-        $slowMoving = InventoryItem::where('is_archived', false)
-            ->orderBy('quantity')
+     $slowMoving = \App\Models\OrderItem::selectRaw('cheese_product, SUM(total_kg) as total')
+            ->groupBy('cheese_product')
+            ->orderBy('total')
             ->first();
 
         if ($request->has('report_type')) {
@@ -70,9 +71,11 @@ class ReportsController extends Controller
         ));
     }
 
-    private function inventoryReport($startDate, $endDate)
+   private function inventoryReport($startDate, $endDate)
 {
-    return InventoryItem::where('is_archived', false)->get();
+    return InventoryItem::where('is_archived', false)
+        ->where('category', 'Raw Materials')
+        ->get();
 }
 
 private function productionReport($startDate, $endDate)

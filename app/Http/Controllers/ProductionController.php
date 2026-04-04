@@ -26,8 +26,28 @@ class ProductionController extends Controller
         ->paginate(10)
         ->withQueryString();
 
-    $staff = User::where('status', 'Active')->get();
-    return view('production.index', compact('batches', 'archivedBatches', 'staff', 'search'));
+$staff = User::where('status', 'Active')->get();
+
+    $todayOrders = \App\Models\OrderItem::whereHas('order', function($q) {
+            $q->where('status', 'Confirmed')
+              ->whereDate('order_date', today());
+        })
+        ->get()
+        ->groupBy('cheese_product')
+        ->map(function($items) {
+            return [
+                'total_pcs' => $items->sum('quantity_pieces'),
+                'total_kg'  => $items->sum('total_kg'),
+                'clients'   => $items->pluck('order.client_name')->unique()->count(),
+            ];
+        });
+
+   $todayBatchProducts = ProductionBatch::whereDate('production_date', today())
+        ->where('is_archived', false)
+        ->pluck('product_type')
+        ->toArray();
+
+    return view('production.index', compact('batches', 'archivedBatches', 'staff', 'search', 'todayOrders', 'todayBatchProducts'));
 }
 
     public function store(Request $request)
@@ -66,10 +86,21 @@ class ProductionController extends Controller
             return back()->withErrors(['status' => 'Cannot move batch backwards in the workflow.']);
         }
 
-        $productionBatch->update($request->only(
+       $productionBatch->update($request->only(
             'batch_number', 'product_type', 'quantity',
             'production_date', 'status', 'remarks', 'staff_id'
         ));
+
+        // Auto-deliver orders when batch is completed
+        if ($request->status === 'Completed') {
+            \App\Models\Order::whereHas('items', function($q) use ($productionBatch) {
+                $q->where('cheese_product', $productionBatch->product_type);
+            })
+            ->where('status', 'Confirmed')
+            ->whereDate('order_date', $productionBatch->production_date)
+           ->update(['status' => 'Completed']);
+        }
+
         ActivityLog::record('Production', 'Updated Batch', "Batch {$productionBatch->batch_number} updated.");
         return back()->with('success', 'Production batch updated.');
     }
@@ -94,5 +125,19 @@ class ProductionController extends Controller
         $productionBatch->delete();
         ActivityLog::record('Production', 'Deleted Batch', "Batch {$num} permanently deleted.");
         return back()->with('success', 'Production batch permanently deleted.');
+    }
+    public function nextBatchNumber()
+    {
+       $last = ProductionBatch::orderByDesc('id')
+            ->value('batch_number');
+
+        if ($last && preg_match('/B-(\d{4})-(\d+)/', $last, $m)) {
+            $next = str_pad((int)$m[2] + 1, 3, '0', STR_PAD_LEFT);
+            $number = 'B-' . $m[1] . '-' . $next;
+        } else {
+            $number = 'B-' . now()->year . '-001';
+        }
+
+        return response()->json(['batch_number' => $number]);
     }
 }

@@ -759,11 +759,11 @@
       color: #e65100;
       box-shadow: 0 2px 8px rgba(230, 81, 0, 0.15);
     }
-    .status-tag.curing {
-      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-      color: #1565c0;
-      box-shadow: 0 2px 8px rgba(21, 101, 192, 0.15);
-    }
+    .status-tag.completed {
+  background: linear-gradient(135deg, #d7f5e0, #c8ebd1);
+  color: #0e472d;
+  box-shadow: 0 2px 8px rgba(26, 107, 71, 0.15);
+}
 
     /* =====================================================
       MODALS

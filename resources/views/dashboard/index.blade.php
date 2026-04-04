@@ -29,6 +29,46 @@
       </div>
     </div>
 
+    {{-- TODAY'S SUMMARY --}}
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+
+  {{-- Pending Orders --}}
+  <div style="background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.08); border-left:4px solid #f57c00;">
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+      <div style="background:#fff8e1; border-radius:10px; padding:0.6rem;">
+        <i class="fas fa-clock" style="color:#f57c00;"></i>
+      </div>
+      <div>
+        <p style="margin:0; font-size:0.8rem; color:#888;">Awaiting Confirmation</p>
+        <p style="margin:0; font-weight:700; font-size:1.3rem; color:#e65100;">{{ $pendingOrdersCount }} Pending Orders</p>
+      </div>
+    </div>
+    <a href="{{ route('orders.index') }}" style="font-size:0.8rem; color:#f57c00; font-weight:600; text-decoration:none;">View Orders →</a>
+  </div>
+
+ {{-- Today's Orders --}}
+  <a href="{{ route('orders.index') }}" style="text-decoration:none; display:block; background:#fff; border-radius:16px; padding:1.5rem; box-shadow:0 4px 15px rgba(0,0,0,0.08); border-left:4px solid #1a6b47; transition:all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.12)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+      <div style="background:#e8f5e9; border-radius:10px; padding:0.6rem;">
+        <i class="fas fa-clipboard-check" style="color:#1a6b47;"></i>
+      </div>
+      <div>
+        <p style="margin:0; font-size:0.8rem; color:#888;">Today's Confirmed Orders</p>
+        <p style="margin:0; font-weight:700; font-size:1.3rem; color:#0e472d;">{{ $todayOrders->count() }} Order(s)</p>
+      </div>
+    </div>
+    @forelse($todayOrders as $order)
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #f3f4f6;">
+      <span style="font-size:0.85rem; font-weight:500; color:#333;">{{ $order->client_name }}</span>
+      <span class="status-tag {{ $order->status === 'Completed' ? 'completed' : 'active' }}" style="font-size:0.72rem; padding:3px 10px;">{{ $order->status }}</span>
+    </div>
+    @empty
+    <p style="font-size:0.85rem; color:#aaa; margin:0;">No confirmed orders today.</p>
+  @endforelse
+  </a>
+
+</div>
+
     {{-- GRID --}}
     <div class="grid">
       <div class="chart-card">
@@ -52,25 +92,7 @@
         </ul>
       </div>
 
-      <div class="batches">
-        <h3>Latest Batch Records</h3>
-        <table>
-          <thead>
-            <tr><th>Batch ID</th><th>Date</th><th>Status</th></tr>
-          </thead>
-          <tbody>
-            @forelse($latestBatches as $batch)
-              <tr>
-                <td>{{ $batch->batch_id }}</td>
-                <td>{{ $batch->start_date->format('Y-m-d') }}</td>
-                <td>{{ $batch->status }}</td>
-              </tr>
-            @empty
-              <tr><td colspan="3">No batches yet.</td></tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+  
     </div>
  </section>
  <div id="lowStockModal" class="custom-modal">
