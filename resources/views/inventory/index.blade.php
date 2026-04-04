@@ -585,7 +585,12 @@ function renderInvTable() {
   });
 }
 
+
 renderInvTable();
+
+// Show Add button on initial load if on Current Stock tab
+const addBtn = document.getElementById('openAddItem');
+if (addBtn) addBtn.style.display = 'inline-flex';
 
 document.getElementById('colToggleBtn').addEventListener('click', function(e) {
   e.stopPropagation();
