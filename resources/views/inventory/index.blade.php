@@ -68,6 +68,10 @@ $unitMap = [
         style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:#555;">
         <i class="fas fa-archive"></i> Archived
       </button>
+      <button class="inv-tab" id="tabRestock" onclick="switchTab('restock')"
+        style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:#555;">
+        <i class="fas fa-chart-line"></i> Predictive Restock
+      </button>
     </div>
 
     {{-- Date Picker --}}
@@ -171,8 +175,8 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
       <table id="inboundMovementsTable">
         <thead>
           <tr>
-            <th>Date</th><th>Product</th><th>Category</th><th>Quantity</th>
-            <th>Unit</th><th>Reference/Invoice</th><th>Remarks</th><th>Recorded By</th>
+           <th>Date</th><th>Product</th><th>Category</th><th>Quantity</th>
+            <th>Unit</th><th>Reference/Invoice</th><th>Remarks</th><th>Expiry Date</th><th>Recorded By</th>
           </tr>
         </thead>
         <tbody>
@@ -183,8 +187,22 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
             <td>{{ $movement->item->category }}</td>
             <td style="color:#1a6b47;font-weight:600;">+{{ $movement->quantity }}</td>
             <td>{{ $movement->item->unit }}</td>
-            <td>{{ $movement->reference ?? '—' }}</td>
+           <td>{{ $movement->reference ?? '—' }}</td>
             <td>{{ $movement->remarks ?? '—' }}</td>
+            <td>
+              @if($movement->expiry_date)
+               @php $daysLeft = (int) now()->diffInDays($movement->expiry_date, false); @endphp
+                @if($daysLeft < 0)
+                  <span style="color:#c62828;font-weight:600;">⛔ Expired</span>
+                @elseif($daysLeft <= 7)
+                  <span style="color:#e65100;font-weight:600;">⚠️ {{ $movement->expiry_date->format('Y-m-d') }} ({{ $daysLeft }}d left)</span>
+                @else
+                  <span style="color:#1a6b47;">{{ $movement->expiry_date->format('Y-m-d') }}</span>
+                @endif
+              @else
+                <span style="color:#aaa;">—</span>
+              @endif
+            </td>
             <td>{{ $movement->recordedBy->username ?? 'System' }}</td>
           </tr>
           @empty
@@ -221,7 +239,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
             <td>{{ $movement->item->category }}</td>
             <td style="color:#c62828;font-weight:600;">-{{ $movement->quantity }}</td>
             <td>{{ $movement->item->unit }}</td>
-            <td>{{ $movement->reference ?? '—' }}</td>
+          <td>{{ $movement->reference ?? '—' }}</td>
             <td>{{ $movement->remarks ?? '—' }}</td>
             <td>{{ $movement->recordedBy->username ?? 'System' }}</td>
           </tr>
@@ -273,6 +291,62 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
           </tr>
           @empty
           <tr><td colspan="8" style="text-align:center;">No archived items.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{{-- PREDICTIVE RESTOCKING TABLE --}}
+  <div id="restockTable" style="display:none;">
+    <div class="module-header" style="margin-bottom:1rem;">
+      <h2 style="font-size:1.1rem;"><i class="fas fa-chart-line" style="color:#1a6b47;"></i> Predictive Restocking</h2>
+      <span style="font-size:0.8rem;color:#888;">Based on last 30 days of outbound usage · Lead time: 3 days</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Avg Daily Usage</th>
+            <th>Days Left</th>
+            <th>Suggested Order (14 days)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($restockData as $r)
+          <tr>
+            <td style="font-weight:600;">{{ $r['product_name'] }}</td>
+            <td>{{ number_format($r['quantity'], 2) }} {{ $r['unit'] }}</td>
+            <td>{{ $r['avg_daily_usage'] > 0 ? $r['avg_daily_usage'].' '.$r['unit'].'/day' : '—' }}</td>
+            <td>
+              @if($r['days_left'] === null)
+                <span style="color:#aaa;">—</span>
+              @elseif($r['days_left'] <= 3)
+                <span style="color:#c62828;font-weight:700;">{{ $r['days_left'] }} days</span>
+              @elseif($r['days_left'] <= 7)
+                <span style="color:#e65100;font-weight:600;">{{ $r['days_left'] }} days</span>
+              @else
+                <span style="color:#1a6b47;">{{ $r['days_left'] }} days</span>
+              @endif
+            </td>
+            <td>{{ $r['suggested_order'] > 0 ? $r['suggested_order'].' '.$r['unit'] : '—' }}</td>
+            <td>
+              @if($r['restock_status'] === 'Restock Now')
+                <span style="background:#fdecea;color:#c62828;border-radius:20px;padding:3px 12px;font-size:0.78rem;font-weight:700;">🔴 Restock Now</span>
+              @elseif($r['restock_status'] === 'Restock Soon')
+                <span style="background:#fff8e1;color:#e65100;border-radius:20px;padding:3px 12px;font-size:0.78rem;font-weight:700;">🟡 Restock Soon</span>
+              @elseif($r['restock_status'] === 'Safe')
+                <span style="background:#e8f5e9;color:#1a6b47;border-radius:20px;padding:3px 12px;font-size:0.78rem;font-weight:700;">🟢 Safe</span>
+              @else
+                <span style="background:#f5f5f5;color:#aaa;border-radius:20px;padding:3px 12px;font-size:0.78rem;">No Data</span>
+              @endif
+            </td>
+          </tr>
+          @empty
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:#888;">No inventory data available.</td></tr>
           @endforelse
         </tbody>
       </table>
@@ -397,7 +471,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         <select name="inventory_item_id" required>
           <option value="" disabled selected>Select a product</option>
           @foreach($items as $item)
-            <option value="{{ $item->id }}">{{ $item->product_name }} ({{ $item->category }})</option>
+            <option value="{{ $item->id }}">{{ $item->product_name }}</option>
           @endforeach
         </select>
       </div>
@@ -413,9 +487,13 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         <label>Reference / Invoice No.</label>
         <input type="text" name="reference" placeholder="e.g. INV-2026-001" />
       </div>
-      <div class="form-group">
+     <div class="form-group">
         <label>Remarks</label>
         <input type="text" name="remarks" placeholder="Optional notes" />
+      </div>
+      <div class="form-group">
+        <label>Expiry Date <span style="color:#888;font-size:0.8rem;">(optional)</span></label>
+        <input type="date" name="expiry_date" />
       </div>
       <div class="modal-buttons">
         <button type="button" id="closeAddInbound" class="btn-cancel">Cancel</button>
@@ -437,7 +515,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         <select name="inventory_item_id" required>
           <option value="" disabled selected>Select a product</option>
           @foreach($items as $item)
-            <option value="{{ $item->id }}">{{ $item->product_name }} ({{ $item->category }}) — {{ number_format($item->quantity, 2) }} {{ $item->unit }} available</option>
+          <option value="{{ $item->id }}">{{ $item->product_name }} — {{ number_format($item->quantity, 2) }} {{ $item->unit }}</option>
           @endforeach
         </select>
       </div>
@@ -609,6 +687,7 @@ function switchTab(tab) {
   document.getElementById('inboundTable').style.display  = tab === 'inbound'  ? 'block' : 'none';
   document.getElementById('outboundTable').style.display = tab === 'outbound' ? 'block' : 'none';
   document.getElementById('archivedTable').style.display = tab === 'archived' ? 'block' : 'none';
+  document.getElementById('restockTable').style.display  = tab === 'restock'  ? 'block' : 'none';
   document.querySelectorAll('.inv-tab').forEach(btn => {
     btn.style.background = 'transparent';
     btn.style.color      = '#555';

@@ -41,11 +41,27 @@ class DashboardController extends Controller
 
 $pendingOrdersCount = \App\Models\Order::where('status', 'Pending')->count();
 
+$expiringItems = \App\Models\InventoryMovement::with('item')
+    ->where('type', 'inbound')
+    ->whereNotNull('expiry_date')
+    ->whereDate('expiry_date', '>=', today())
+    ->whereDate('expiry_date', '<=', now()->addDays(7))
+    ->get()
+    ->groupBy('inventory_item_id');
+
+$expiredItems = \App\Models\InventoryMovement::with('item')
+    ->where('type', 'inbound')
+    ->whereNotNull('expiry_date')
+    ->whereDate('expiry_date', '<', today())
+    ->get()
+    ->groupBy('inventory_item_id');
+
 return view('dashboard.index', compact(
     'totalStock', 'todayOutput', 'lowStockCount',
     'lowStockItems', 'recentNotifications',
     'productionChartData', 'todayBatches',
-    'todayOrders', 'pendingOrdersCount'
+    'todayOrders', 'pendingOrdersCount',
+    'expiringItems', 'expiredItems'
 ));
     }
 

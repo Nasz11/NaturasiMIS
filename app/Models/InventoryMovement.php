@@ -5,19 +5,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryMovement extends Model
 {
-    protected $fillable = [
-        'inventory_item_id',
-        'type',
-        'quantity',
-        'reference',
-        'remarks',
-        'recorded_by',
-        'movement_date',
-    ];
+   protected $fillable = [
+    'inventory_item_id',
+    'type',
+    'quantity',
+    'reference',
+    'remarks',
+    'recorded_by',
+    'movement_date',
+    'expiry_date',
+];
 
-    protected $casts = [
-        'movement_date' => 'datetime',
-    ];
+protected $casts = [
+    'movement_date' => 'datetime',
+    'expiry_date'   => 'date',
+];
 
     public function item()
     {

@@ -47,10 +47,40 @@ class InventoryController extends Controller
         ->get()
         ->groupBy('inventory_item_id');
 
+    $leadTimeDays = 3;
+    $lookbackDays = 30;
+
+    $restockData = $items->map(function ($item) use ($leadTimeDays, $lookbackDays) {
+        $outbound = \App\Models\InventoryMovement::where('inventory_item_id', $item->id)
+            ->where('type', 'outbound')
+            ->where('movement_date', '>=', now()->subDays($lookbackDays))
+            ->sum('quantity');
+
+        $avgDailyUsage = $lookbackDays > 0 ? round($outbound / $lookbackDays, 2) : 0;
+        $daysLeft = $avgDailyUsage > 0 ? round($item->quantity / $avgDailyUsage, 1) : null;
+
+        if ($avgDailyUsage == 0) $restockStatus = 'No Usage';
+        elseif ($daysLeft <= $leadTimeDays) $restockStatus = 'Restock Now';
+        elseif ($daysLeft <= 7) $restockStatus = 'Restock Soon';
+        else $restockStatus = 'Safe';
+
+        return [
+            'id'             => $item->id,
+            'product_name'   => $item->product_name,
+            'quantity'       => $item->quantity,
+            'unit'           => $item->unit,
+            'avg_daily_usage' => $avgDailyUsage,
+            'days_left'      => $daysLeft,
+            'restock_status' => $restockStatus,
+            'suggested_order' => $avgDailyUsage > 0 ? round($avgDailyUsage * 14) : 0,
+        ];
+    });
+
     return view('inventory.index', compact(
         'items', 'archivedItems',
         'date',
-        'inboundMovements', 'outboundMovements'
+        'inboundMovements', 'outboundMovements',
+        'restockData'
     ));
 }
 
@@ -103,14 +133,15 @@ class InventoryController extends Controller
 
     public function storeMovement(Request $request)
     {
-        $request->validate([
-            'inventory_item_id' => 'required|exists:inventory_items,id',
-            'type'              => 'required|in:inbound,outbound',
-            'quantity'          => 'required|numeric|min:0.01',
-            'reference'         => 'nullable|string|max:255',
-            'remarks'           => 'nullable|string|max:255',
-            'movement_date'     => 'required|date',
-        ]);
+       $request->validate([
+    'inventory_item_id' => 'required|exists:inventory_items,id',
+    'type'              => 'required|in:inbound,outbound',
+    'quantity'          => 'required|numeric|min:0.01',
+    'reference'         => 'nullable|string|max:255',
+    'remarks'           => 'nullable|string|max:255',
+    'movement_date'     => 'required|date',
+    'expiry_date'       => 'nullable|date|after:today',
+]);
 
         $item = InventoryItem::findOrFail($request->inventory_item_id);
 
@@ -123,14 +154,15 @@ class InventoryController extends Controller
         }
 
         InventoryMovement::create([
-            'inventory_item_id' => $request->inventory_item_id,
-            'type'              => $request->type,
-            'quantity'          => $request->quantity,
-            'reference'         => $request->reference,
-            'remarks'           => $request->remarks,
-            'recorded_by'       => auth()->id(),
-            'movement_date'     => $request->movement_date,
-        ]);
+    'inventory_item_id' => $request->inventory_item_id,
+    'type'              => $request->type,
+    'quantity'          => $request->quantity,
+    'reference'         => $request->reference,
+    'remarks'           => $request->remarks,
+    'recorded_by'       => auth()->id(),
+    'movement_date'     => $request->movement_date,
+    'expiry_date'       => $request->type === 'inbound' ? $request->expiry_date : null,
+]);
 
         // Sync quantity
         $newQty = $item->computedQuantity();
