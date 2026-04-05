@@ -433,7 +433,7 @@
           <p style="color:#666; margin-bottom:1rem; font-size:0.95rem;">Review ingredients needed. Green = sufficient, Red = insufficient.</p>
         <div class="table-container" style="margin-top:0; box-shadow:none; padding:0; overflow-x:hidden;">
             <table>
-              <thead><tr><th>Ingredient</th><th>Needed</th><th>Available</th><th>Unit</th><th>Status</th></tr></thead>
+             <thead><tr><th>Ingredient</th><th>Needed</th><th>Available</th><th>Status</th></tr></thead>
               <tbody id="previewBody"></tbody>
             </table>
           </div>
@@ -897,11 +897,26 @@ validationMsg.style.display = 'none';
           const tbody = document.getElementById('previewBody');
           tbody.innerHTML = '';
           data.preview.forEach(row => {
-        const ok = row.available >= row.needed;
-  const isSalt = row.ingredient === 'Iodized Salt';
- const neededDisplay = isSalt ? (parseFloat(row.needed) / 0.000006).toFixed(1) : parseFloat(row.needed).toFixed(3);
-const unitDisplay = isSalt ? 'Scoops' : row.unit;
-  tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:10px 14px;">${row.ingredient}</td><td style="text-align:right; padding:10px 14px;">${neededDisplay}</td><td style="text-align:right; padding:10px 14px;">${parseFloat(row.available).toFixed(3)}</td><td style="text-align:right; padding:10px 14px;">${unitDisplay}</td><td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td></tr>`;
+   const fmt = (v) => parseFloat(parseFloat(v).toFixed(3)).toString();
+
+const ingredientConfig = {
+    'Cream':        { neededUnit: 'pcs',    availableUnit: 'L',  toAvailable: (v) => fmt(v * 0.0625) },
+    'Iodized Salt': { neededUnit: 'scoops', availableUnit: 'kg', toAvailable: (v) => fmt(v * 0.006)  }
+};
+
+const config = ingredientConfig[row.ingredient];
+const ok = row.available >= row.needed;
+
+const neededText    = config ? `${row.needed} ${config.neededUnit}` : `${fmt(row.needed)} ${row.unit}`;
+const availableText = config ? `${config.toAvailable(row.available)} ${config.availableUnit}` : `${fmt(row.available)} ${row.unit}`;
+
+tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;">
+  <td style="padding:10px 14px;">${row.ingredient}</td>
+  <td style="text-align:right; padding:10px 14px;">${neededText}</td>
+  <td style="text-align:right; padding:10px 14px;">${availableText}</td>
+  <td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td>
+</tr>`;
+
           });
           document.getElementById('insufficientWarning').style.display = data.insufficient > 0 ? 'flex' : 'none';
          document.getElementById('confirmOrder').disabled = false;
@@ -1069,11 +1084,25 @@ document.querySelectorAll(cls).forEach(inp => {
             const tbody = document.getElementById('confirmPreviewBody');
             tbody.innerHTML = '';
             data.preview.forEach(row => {
-          const ok = row.available >= row.needed;
-  const isSalt = row.ingredient === 'Iodized Salt';
-  const neededDisplay = isSalt ? (parseFloat(row.needed) / 0.000006).toFixed(1) : parseFloat(row.needed).toFixed(3);
- const unitDisplay = isSalt ? 'Scoops' : row.unit;
- tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:10px 14px;">${row.ingredient}</td><td style="text-align:right; padding:10px 14px;">${neededDisplay}</td><td style="text-align:right; padding:10px 14px;">${parseFloat(row.available).toFixed(3)}</td><td style="text-align:right; padding:10px 14px;">${unitDisplay}</td><td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td></tr>`;
+      const fmt = (v) => parseFloat(parseFloat(v).toFixed(3)).toString();
+
+const ingredientConfig = {
+    'Cream':        { neededUnit: 'pcs',    availableUnit: 'L',  toAvailable: (v) => fmt(v * 0.0625) },
+    'Iodized Salt': { neededUnit: 'scoops', availableUnit: 'kg', toAvailable: (v) => fmt(v * 0.006)  }
+};
+
+const config = ingredientConfig[row.ingredient];
+const ok = row.available >= row.needed;
+
+const neededText    = config ? `${row.needed} ${config.neededUnit}` : `${fmt(row.needed)} ${row.unit}`;
+const availableText = config ? `${config.toAvailable(row.available)} ${config.availableUnit}` : `${fmt(row.available)} ${row.unit}`;
+
+tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;">
+  <td style="padding:10px 14px;">${row.ingredient}</td>
+  <td style="text-align:right; padding:10px 14px;">${neededText}</td>
+  <td style="text-align:right; padding:10px 14px;">${availableText}</td>
+  <td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td>
+</tr>`;
             });
            document.getElementById('confirmInsufficientWarning').style.display = 'none';
            document.getElementById('confirmStatusBtn').disabled = false;
