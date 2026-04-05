@@ -3,14 +3,13 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\ProductVariant;
 
 class ProductVariantSeeder extends Seeder
 {
     public function run(): void
     {
-        ProductVariant::truncate();
-
         $variants = [
             ['id'=>2,  'cheese_product'=>'Burrata',           'variant_name'=>'50g',          'weight_grams'=>50],
             ['id'=>3,  'cheese_product'=>'Burrata',           'variant_name'=>'125g',         'weight_grams'=>125],
@@ -35,7 +34,7 @@ class ProductVariantSeeder extends Seeder
         ];
 
         foreach ($variants as $v) {
-            ProductVariant::create($v);
+            ProductVariant::updateOrCreate(['id' => $v['id']], $v);
         }
     }
 }
