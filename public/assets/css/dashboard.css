@@ -1740,3 +1740,22 @@
   color: #aaa !important;
   letter-spacing: 2px !important;
 }
+
+/* =====================================================
+   INGREDIENT TABLE ENHANCEMENTS
+===================================================== */
+.unit {
+    color: #6b7280;
+    font-size: 0.8rem;
+    margin-left: 3px;
+    font-weight: 400;
+}
+
+.value {
+    font-weight: 600;
+    color: #0e472d;
+}
+
+td {
+    font-variant-numeric: tabular-nums;
+}

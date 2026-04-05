@@ -441,7 +441,7 @@
             <i class="fas fa-exclamation-circle"></i> Some ingredients are insufficient.
           </div>
           <div class="modal-buttons" style="margin-top:1.5rem;">
-            <button type="button" class="btn-cancel" id="backToStep1"><i class="fas fa-arrow-left"></i> Back</button>
+            <button type="button" class="btn-cancel" id="backToStep1"> Back</button>
            <button type="button" class="btn-primary" id="confirmOrder"><i class="fas fa-save"></i> Save Order</button>
           </div>
         </div>
@@ -910,10 +910,13 @@ const ok = row.available >= row.needed;
 const neededText    = config ? `${row.needed} ${config.neededUnit}` : `${fmt(row.needed)} ${row.unit}`;
 const availableText = config ? `${config.toAvailable(row.available)} ${config.availableUnit}` : `${fmt(row.available)} ${row.unit}`;
 
+const [nNum, nUnit] = neededText.split(' ');
+const [aNum, aUnit] = availableText.split(' ');
+
 tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;">
   <td style="padding:10px 14px;">${row.ingredient}</td>
-  <td style="text-align:right; padding:10px 14px;">${neededText}</td>
-  <td style="text-align:right; padding:10px 14px;">${availableText}</td>
+  <td style="text-align:right; padding:10px 14px;"><span class="value">${nNum}</span> <span class="unit">${nUnit}</span></td>
+  <td style="text-align:right; padding:10px 14px;"><span class="value">${aNum}</span> <span class="unit">${aUnit}</span></td>
   <td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td>
 </tr>`;
 
@@ -1097,10 +1100,13 @@ const ok = row.available >= row.needed;
 const neededText    = config ? `${row.needed} ${config.neededUnit}` : `${fmt(row.needed)} ${row.unit}`;
 const availableText = config ? `${config.toAvailable(row.available)} ${config.availableUnit}` : `${fmt(row.available)} ${row.unit}`;
 
+const [nNum, nUnit] = neededText.split(' ');
+const [aNum, aUnit] = availableText.split(' ');
+
 tbody.innerHTML += `<tr style="border-bottom:1px solid #f3f4f6;">
   <td style="padding:10px 14px;">${row.ingredient}</td>
-  <td style="text-align:right; padding:10px 14px;">${neededText}</td>
-  <td style="text-align:right; padding:10px 14px;">${availableText}</td>
+  <td style="text-align:right; padding:10px 14px;"><span class="value">${nNum}</span> <span class="unit">${nUnit}</span></td>
+  <td style="text-align:right; padding:10px 14px;"><span class="value">${aNum}</span> <span class="unit">${aUnit}</span></td>
   <td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td>
 </tr>`;
             });
