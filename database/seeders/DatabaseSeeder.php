@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Batch;
 use App\Models\InventoryItem;
-use App\Models\ProductionBatch;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -23,14 +21,14 @@ class DatabaseSeeder extends Seeder
             'email'    => 'admin@naturasi.com',
         ]);
 
-        $inventory = User::create([
+        User::create([
             'username' => 'inventory',
             'password' => Hash::make('5678'),
             'role'     => 'inventory',
             'status'   => 'Active',
         ]);
 
-        $production = User::create([
+        User::create([
             'username' => 'production',
             'password' => Hash::make('91011'),
             'role'     => 'production',
@@ -50,16 +48,6 @@ class DatabaseSeeder extends Seeder
             'company_description' => 'Premium cheese manufacturing since 2020.',
             'theme'               => 'default',
         ]);
-
-        // ── INVENTORY — FINISHED PRODUCTS ─────────────────────
-        $products = [
-            ['Burrata',                  'Cheese Product', 0, 'kg',  20],
-            ['Stracciatella',            'Cheese Product', 0, 'kg',  20],
-            ['Cherry Mozzarella',        'Cheese Product', 0, 'kg',  20],
-            ['Traditional Mozzarella',   'Cheese Product', 0, 'kg',  20],
-            ['Provola',                  'Cheese Product', 0, 'kg',  20],
-            ['Mozzarella di Latte',      'Cheese Product', 0, 'kg',  20],
-        ];
 
         // ── INVENTORY — RAW MATERIALS ──────────────────────────
         $rawMaterials = [
@@ -81,7 +69,7 @@ class DatabaseSeeder extends Seeder
             ['Milk Powder',      'Raw Materials', 0, 'kg', 10],
         ];
 
-        foreach (array_merge($products, $rawMaterials) as [$name, $cat, $qty, $unit, $reorder]) {
+        foreach ($rawMaterials as [$name, $cat, $qty, $unit, $reorder]) {
             InventoryItem::create([
                 'product_name'  => $name,
                 'category'      => $cat,
@@ -91,49 +79,5 @@ class DatabaseSeeder extends Seeder
                 'updated_by'    => $admin->id,
             ]);
         }
-
-        // ── PRODUCTION BATCHES ─────────────────────────────────
-        ProductionBatch::create([
-            'batch_number'    => 'B-2026-001',
-            'product_type'    => 'Burrata',
-            'quantity'        => 50,
-            'production_date' => now()->subDays(3),
-            'status'          => 'In Production',
-            'remarks'         => 'Initial batch.',
-            'staff_id'        => $production->id,
-        ]);
-
-        ProductionBatch::create([
-            'batch_number'    => 'B-2026-002',
-            'product_type'    => 'Traditional Mozzarella',
-            'quantity'        => 80,
-            'production_date' => now()->subDays(7),
-            'status'          => 'Completed',
-            'remarks'         => 'Batch completed successfully.',
-            'staff_id'        => $production->id,
-        ]);
-
-        // ── BATCHES ────────────────────────────────────────────
-        Batch::create([
-            'batch_id'        => 'B-2026-001',
-            'cheese_type'     => 'Burrata',
-            'quantity'        => 50,
-            'start_date'      => now()->subDays(3),
-            'completion_date' => now()->addDays(2),
-            'status'          => 'In Production',
-            'staff_id'        => $production->id,
-            'remarks'         => 'Initial batch.',
-        ]);
-
-        Batch::create([
-            'batch_id'        => 'B-2026-002',
-            'cheese_type'     => 'Traditional Mozzarella',
-            'quantity'        => 80,
-            'start_date'      => now()->subDays(7),
-            'completion_date' => now()->subDays(1),
-            'status'          => 'Completed',
-            'staff_id'        => $production->id,
-            'remarks'         => 'Batch completed successfully.',
-        ]);
     }
 }
