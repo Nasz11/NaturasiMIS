@@ -10,6 +10,10 @@ class ProductVariantSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('product_variants')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $variants = [
             ['id'=>2,  'cheese_product'=>'Burrata',           'variant_name'=>'50g',          'weight_grams'=>50],
             ['id'=>3,  'cheese_product'=>'Burrata',           'variant_name'=>'125g',         'weight_grams'=>125],
@@ -33,8 +37,6 @@ class ProductVariantSeeder extends Seeder
             ['id'=>22, 'cheese_product'=>'Cherry Mozzarella', 'variant_name'=>'1kg',          'weight_grams'=>1000],
         ];
 
-        foreach ($variants as $v) {
-            ProductVariant::updateOrCreate(['id' => $v['id']], $v);
-        }
+        DB::table('product_variants')->insert($variants);
     }
 }
