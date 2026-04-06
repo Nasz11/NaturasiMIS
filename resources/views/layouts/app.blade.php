@@ -186,7 +186,6 @@
         <div class="form-group">
           <label><i class="fas fa-palette"></i> Theme</label>
           <select name="theme">
-            <option value="default" {{ auth()->user()->theme === 'default' ? 'selected' : '' }}>Default (Green)</option>
             <option value="light"   {{ auth()->user()->theme === 'light'   ? 'selected' : '' }}>Light Mode</option>
             <option value="dark"    {{ auth()->user()->theme === 'dark'    ? 'selected' : '' }}>Dark Mode</option>
           </select>

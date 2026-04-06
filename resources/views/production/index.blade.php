@@ -20,7 +20,7 @@
   </div>
 
  {{-- TODAY'S ORDERS SUMMARY --}}
-  <div style="background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:1.5rem;">
+ <div class="production-orders-card">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
       <p style="font-size:1rem; font-weight:600; color:#1a6b47; margin:0;"><i class="fas fa-clipboard-list"></i> Today's Confirmed Orders — {{ now()->format('F d, Y') }}</p>
       <span style="background:#e8f5e9; color:#1a6b47; font-size:0.75rem; font-weight:600; padding:4px 12px; border-radius:99px;">{{ $todayOrders->count() }} product(s)</span>
@@ -33,7 +33,7 @@
     @else
     <div style="display:flex; flex-direction:column; gap:0.75rem;">
       @foreach($todayOrders as $product => $data)
-      <div style="display:flex; align-items:center; justify-content:space-between; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:0.9rem 1.1rem;">
+     <div class="production-order-item">
         <div style="display:flex; align-items:center; gap:0.75rem;">
           <div style="background:#e8f5e9; border-radius:8px; padding:0.5rem;">
             <i class="fas fa-cheese" style="color:#1a6b47;"></i>

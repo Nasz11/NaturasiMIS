@@ -55,14 +55,14 @@
  {{-- INSIGHTS CARDS --}}
 <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
   @if($bestSelling)
-  <div style="background:#f0f7f4;border-left:4px solid #1a6b47;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
+<div class="report-insight-best dashboard-summary-card" style="border-left:4px solid #1a6b47;flex:1;min-width:180px;">
     <div style="font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;">🏆 Best Selling</div>
     <div style="font-size:1.2rem;font-weight:700;color:#1a6b47;">{{ $bestSelling->cheese_product }}</div>
     <div style="font-size:.8rem;color:#888;">{{ number_format($bestSelling->total, 2) }} kg total ordered</div>
   </div>
   @endif
   @if($slowMoving)
- <div style="background:#fff8f0;border-left:4px solid #f57c00;border-radius:8px;padding:1rem 1.5rem;flex:1;min-width:180px;">
+ <div class="report-insight-slow dashboard-summary-card" style="border-left:4px solid #f57c00;flex:1;min-width:180px;">
     <div style="font-size:.75rem;color:#666;font-weight:600;text-transform:uppercase;">🐢 Slow Moving</div>
     <div style="font-size:1.2rem;font-weight:700;color:#f57c00;">{{ $slowMoving->cheese_product }}</div>
     <div style="font-size:.8rem;color:#888;">{{ number_format($slowMoving->total, 2) }} kg total ordered</div>
@@ -246,14 +246,23 @@ if (ctx) {
         { label: '{{ now()->year - 1 }}', data: lastYear, backgroundColor: 'rgba(180,180,180,0.6)' }
       ];
 
+  const isDark = document.body.classList.contains('theme-dark');
+  const tickColor = isDark ? '#eee' : '#666';
+  const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
   new Chart(ctx, {
     type: 'bar',
     data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      plugins: { legend: { position: 'top' } },
-      scales: { y: { beginAtZero: true } }
+      plugins: {
+        legend: { position: 'top', labels: { color: tickColor } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } },
+        x: { ticks: { color: tickColor }, grid: { color: gridColor } }
+      }
     }
   });
 }
@@ -309,5 +318,34 @@ function exportCSV() {
   a.download = '{{ $type }}-report-{{ now()->format("Y-m-d") }}.csv';
   a.click();
 }
+</script>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function applyReportCardDark() {
+    const isDark = document.body.classList.contains('theme-dark');
+
+    const best = document.querySelector('.report-insight-best');
+    if (best) {
+      best.style.setProperty('background', isDark ? '#1a1a2e' : '#fff', 'important');
+      best.querySelectorAll('div').forEach(d => d.style.setProperty('color', isDark ? '#eee' : '', 'important'));
+    }
+
+    const slow = document.querySelector('.report-insight-slow');
+    if (slow) {
+      slow.style.setProperty('background', isDark ? '#1a1a2e' : '#fff', 'important');
+      slow.querySelectorAll('div').forEach(d => d.style.setProperty('color', isDark ? '#eee' : '', 'important'));
+    }
+
+    // Fix form labels
+    document.querySelectorAll('.form-group label').forEach(label => {
+      label.style.setProperty('color', isDark ? '#ccc' : '', 'important');
+    });
+  }
+  applyReportCardDark();
+  new MutationObserver(applyReportCardDark).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+});
 </script>
 @endpush
