@@ -58,12 +58,32 @@ class OrderController extends Controller
     }
 
     private function getMilkRequired($yieldKg)
-    {
-        if ($yieldKg <= 3.75)  return 0;
-        if ($yieldKg <= 12.5)  return 1;
-        if ($yieldKg <= 21.25) return 2;
-        return 3;
-    }
+{
+    $map = [
+        '1.25'  => 0,
+        '2.50'  => 0,
+        '3.75'  => 0,
+        '5.00'  => 1,
+        '6.25'  => 1,
+        '7.50'  => 1,
+        '8.75'  => 1,
+        '10.00' => 1,
+        '11.25' => 1,
+        '12.50' => 1,
+        '13.75' => 2,
+        '15.00' => 2,
+        '16.25' => 2,
+        '17.50' => 2,
+        '18.75' => 2,
+        '20.00' => 2,
+        '21.25' => 2,
+        '22.50' => 3,
+    ];
+
+    $key = number_format($yieldKg, 2, '.', '');
+
+    return $map[$key] ?? 0;
+}
 
     private function getCreamRequired($yieldKg)
     {
@@ -117,7 +137,7 @@ private function computeProductionTotals($totalKg, $product)
     }
 
     // Always normalize total to valid 1.25kg multiple first, then split
-    $normalizedTotal = ceil($totalKg / 1.25) * 1.25;
+    $normalizedTotal = $this->normalizeToBatchSize($totalKg);
     $batches         = $this->splitIntoBatches($normalizedTotal);
 
         foreach ($batches as $batch) {
