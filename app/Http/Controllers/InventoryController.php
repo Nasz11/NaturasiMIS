@@ -175,11 +175,17 @@ class InventoryController extends Controller
     }
 
     public function archive(InventoryItem $inventoryItem)
-    {
-        $inventoryItem->update(['is_archived' => true]);
-        ActivityLog::record('Inventory', 'Archived Item', "Archived {$inventoryItem->product_name}");
-        return back()->with('success', "{$inventoryItem->product_name} has been archived.");
+{
+    if ($inventoryItem->quantity > 0) {
+        return back()->withErrors([
+            'archive' => "Cannot archive {$inventoryItem->product_name} — it still has {$inventoryItem->quantity} {$inventoryItem->unit} in stock."
+        ]);
     }
+
+    $inventoryItem->update(['is_archived' => true]);
+    ActivityLog::record('Inventory', 'Archived Item', "Archived {$inventoryItem->product_name}");
+    return back()->with('success', "{$inventoryItem->product_name} has been archived.");
+}
 
     public function restore(InventoryItem $inventoryItem)
     {

@@ -106,11 +106,17 @@ $staff = User::where('status', 'Active')->get();
     }
 
     public function archive(ProductionBatch $productionBatch)
-    {
-        $productionBatch->update(['is_archived' => true]);
-        ActivityLog::record('Production', 'Archived Batch', "Batch {$productionBatch->batch_number} archived.");
-        return back()->with('success', "Batch {$productionBatch->batch_number} has been archived.");
+{
+    if ($productionBatch->status !== 'Completed') {
+        return back()->withErrors([
+            'archive' => "Cannot archive Batch {$productionBatch->batch_number} — only Completed batches can be archived. Current status: {$productionBatch->status}."
+        ]);
     }
+
+    $productionBatch->update(['is_archived' => true]);
+    ActivityLog::record('Production', 'Archived Batch', "Batch {$productionBatch->batch_number} archived.");
+    return back()->with('success', "Batch {$productionBatch->batch_number} has been archived.");
+}
 
     public function restore(ProductionBatch $productionBatch)
     {

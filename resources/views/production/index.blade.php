@@ -6,6 +6,12 @@
 @section('content')
 <section id="production">
 
+@if($errors->has('archive'))
+  <div id="errorAlert" style="background:#fdecea;color:#c62828;padding:12px 16px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-exclamation-circle"></i> {{ $errors->first('archive') }}
+  </div>
+@endif
+
   <div class="module-header">
     <h2><i class="fas fa-industry"></i> Production Batches</h2>
     <div class="actions">
@@ -201,6 +207,8 @@
   </div>
 
 <script>  
+
+setTimeout(() => document.getElementById('errorAlert')?.remove(), 5000);
 // Tab switching
 function switchTab(tab) {
   document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';

@@ -5,8 +5,15 @@
 
 @section('content')
 <section id="usersSection">
+
+@if($errors->has('delete'))
+  <div id="errorAlert" style="background:#fdecea;color:#c62828;padding:12px 16px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-exclamation-circle"></i> {{ $errors->first('delete') }}
+  </div>
+@endif
+
   <div class="module-header">
-    <h2><i class="fas fa-users"></i> User Management</h2>
+    <h2><i class="fas fa-users"></i> User Management</h2>idk
     <div class="user-actions">
       <button class="btn-primary" id="openAddUser">
         <i class="fas fa-plus"></i> Add User

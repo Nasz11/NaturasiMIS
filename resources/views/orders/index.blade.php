@@ -119,12 +119,19 @@
                       <i class="fas fa-times"></i> Cancel
                     </button>
                   </form>
-            @elseif($order->status === 'Cancelled')
-                  <button type="button" class="action-btn archive-order-btn" title="Archive" style="color:#e67e22;"
-                    data-id="{{ $order->id }}"
-                    data-url="{{ route('orders.archive', $order) }}">
-                    <i class="fas fa-archive"></i>
-                  </button>
+           @if(!in_array($order->status, ['Completed', 'Cancelled']))
+  <button class="action-btn" title="Cannot archive (order not finished)" style="color:#ccc; cursor:not-allowed;" disabled>
+    <i class="fas fa-archive"></i>
+  </button>
+
+@elseif(in_array($order->status, ['Completed', 'Cancelled']))
+  <button type="button" class="action-btn archive-order-btn" title="Archive" style="color:#e67e22;"
+    data-id="{{ $order->id }}"
+    data-url="{{ route('orders.archive', $order) }}">
+    <i class="fas fa-archive"></i>
+  </button>
+@endif
+                
                 @else
                   <span style="color:#aaa; font-size:0.85rem;">—</span>
                 @endif
@@ -227,12 +234,18 @@
                     data-address="{{ $client->address }}">
                     <i class="fas fa-pen"></i>
                   </button>
-                  <form method="POST" action="{{ route('clients.archive', $client) }}" style="display:inline;">
-                    @csrf
-                    <button type="submit" class="action-btn" title="Archive" style="color:#e67e22;">
-                      <i class="fas fa-archive"></i>
-                    </button>
-                  </form>
+                  @if($client->orders()->whereNotIn('status', ['Completed','Cancelled'])->exists())
+  <button class="action-btn" title="Cannot archive (has active orders)" style="color:#ccc; cursor:not-allowed;" disabled>
+    <i class="fas fa-archive"></i>
+  </button>
+@else
+  <form method="POST" action="{{ route('clients.archive', $client) }}" style="display:inline;">
+    @csrf
+    <button type="submit" class="action-btn" title="Archive" style="color:#e67e22;">
+      <i class="fas fa-archive"></i>
+    </button>
+  </form>
+@endif
                 </td>
               </tr>
               @empty
@@ -447,7 +460,7 @@
         </div>
       </div>
       </div>
-    </div>
+    </div>  
 
     {{-- EDIT ORDER MODAL --}}
     <div id="editOrderModal" class="modal">

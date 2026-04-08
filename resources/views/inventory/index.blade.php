@@ -30,7 +30,13 @@ $unitMap = [
   <div class="success-message" id="successAlert">
     <i class="fas fa-check-circle"></i> {{ session('success') }}
   </div>
-  @endif
+@endif
+
+@if($errors->has('archive'))
+  <div class="error-message" id="errorAlert" style="background:#fdecea;color:#c62828;padding:12px 16px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-exclamation-circle"></i> {{ $errors->first('archive') }}
+  </div>
+@endif
 
   <div class="module-header">
     <h2><i class="fas fa-box"></i> Inventory Records</h2>
@@ -551,6 +557,7 @@ const rawMaterials   = @json($rawMaterials);
 const unitMap        = @json($unitMap);
 
 setTimeout(() => document.getElementById('successAlert')?.remove(), 4000);
+setTimeout(() => document.getElementById('errorAlert')?.remove(), 5000);
 
 const invColumns = [
   { key:'product',  label:'Product Name',       default:true  },
