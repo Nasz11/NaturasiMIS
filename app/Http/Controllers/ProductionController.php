@@ -28,26 +28,17 @@ class ProductionController extends Controller
 
 $staff = User::where('status', 'Active')->get();
 
-    $todayOrders = \App\Models\OrderItem::whereHas('order', function($q) {
-            $q->where('status', 'Confirmed')
-              ->whereDate('order_date', today());
-        })
-        ->get()
-        ->groupBy('cheese_product')
-        ->map(function($items) {
-            return [
-                'total_pcs' => $items->sum('quantity_pieces'),
-                'total_kg'  => $items->sum('total_kg'),
-                'clients'   => $items->pluck('order.client_name')->unique()->count(),
-            ];
-        });
+    $todayOrders = \App\Models\Order::with('items')
+    ->where('status', 'Confirmed')
+    ->whereDate('order_date', today())
+    ->get();
 
-   $todayBatchProducts = ProductionBatch::whereDate('production_date', today())
-        ->where('is_archived', false)
-        ->pluck('product_type')
-        ->toArray();
+$todayBatchPoNumbers = ProductionBatch::whereDate('production_date', today())
+    ->where('is_archived', false)
+    ->pluck('remarks')
+    ->toArray();
 
-    return view('production.index', compact('batches', 'archivedBatches', 'staff', 'search', 'todayOrders', 'todayBatchProducts'));
+   return view('production.index', compact('batches', 'archivedBatches', 'staff', 'search', 'todayOrders', 'todayBatchPoNumbers'));
 }
 
     public function store(Request $request)
@@ -98,7 +89,7 @@ $staff = User::where('status', 'Active')->get();
             })
             ->where('status', 'Confirmed')
             ->whereDate('order_date', $productionBatch->production_date)
-           ->update(['status' => 'Completed']);
+           ->get()->each(fn($order) => $order->update(['status' => 'Completed']));
         }
 
         ActivityLog::record('Production', 'Updated Batch', "Batch {$productionBatch->batch_number} updated.");

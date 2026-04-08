@@ -120,12 +120,14 @@
             <div>{{ session('success') }}</div>
           </div>
         @endif
-    @if($errors->any())
+    @unless(View::hasSection('suppressGlobalErrors'))
+      @if($errors->any())
           <div class="alert-message" id="globalError">
             <i class="fas fa-exclamation-circle"></i>
             <div>{{ $errors->first() }}</div>
           </div>
         @endif
+    @endunless
 
         @yield('content')
       </main>
@@ -248,6 +250,9 @@
   <script>
       setTimeout(() => document.getElementById('globalSuccess')?.remove(), 4000);
       setTimeout(() => document.getElementById('globalError')?.remove(), 5000);
+      setTimeout(() => {
+        document.querySelectorAll('.alert-message, .success-message, #errorAlert').forEach(el => el.remove());
+      }, 5000);
     </script>
     @stack('scripts')
 

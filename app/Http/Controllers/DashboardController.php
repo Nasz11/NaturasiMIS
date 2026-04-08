@@ -35,11 +35,11 @@ class DashboardController extends Controller
         }
 
         $todayOrders = \App\Models\Order::with('items')
-    ->whereDate('order_date', today())
-    ->whereIn('status', ['Confirmed', 'Completed'])
-    ->get();
+            ->whereDate('confirmed_at', today())
+            ->whereIn('status', ['Confirmed', 'Completed'])
+            ->get();
 
-$pendingOrdersCount = \App\Models\Order::where('status', 'Pending')->count();
+        $pendingOrdersCount = \App\Models\Order::where('status', 'Pending')->count();
 
 $expiringItems = \App\Models\InventoryMovement::with('item')
     ->where('type', 'inbound')

@@ -2,6 +2,7 @@
 @section('title', 'Inventory')
 @section('page-title', 'Inventory Management')
 @section('page-subtitle', 'Manage all product and material stocks efficiently.')
+@section('suppressGlobalErrors', true)
 
 @php
 
