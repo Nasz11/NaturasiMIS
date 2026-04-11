@@ -25,7 +25,7 @@
   </div>
 
   {{-- FILTERS --}}
-  <form method="GET" action="{{ route('logs.index') }}" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;margin-bottom:1.5rem;">
+  <form method="GET" action="{{ route('logs.index') }}" id="logsFilterForm" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;margin-bottom:1.5rem;">
     <input type="hidden" name="search" value="{{ $search }}">
     <div class="form-group">
       <label>Module</label>
@@ -38,15 +38,12 @@
     </div>
     <div class="form-group">
       <label>Start Date</label>
-      <input type="date" name="start_date" value="{{ $startDate }}" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;" />
+      <input type="date" name="start_date" value="{{ $startDate }}" min="2026-01-01" max="{{ date('Y-m-d') }}" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;" />
     </div>
     <div class="form-group">
       <label>End Date</label>
-      <input type="date" name="end_date" value="{{ $endDate }}" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;" />
+      <input type="date" name="end_date" value="{{ $endDate }}" min="2026-01-01" max="{{ date('Y-m-d') }}" style="padding:.6rem;border-radius:8px;border:1px solid #ccc;" />
     </div>
-    <button type="submit" class="btn-primary">
-      <i class="fas fa-filter"></i> Filter
-    </button>
     <button type="button" onclick="exportCSV()" class="btn-reset">
       <i class="fas fa-file-csv"></i> Export CSV
     </button>
@@ -65,15 +62,50 @@
       <tbody id="logTableBody">
         @forelse($logs as $log)
         <tr>
-          <td>{{ $log->created_at->format('Y-m-d h:i A') }}</td>
+          <td style="font-size:0.85rem;">
+            <div>{{ $log->created_at->format('Y-m-d h:i A') }}</div>
+            <div style="font-size:0.75rem; color:#aaa;">{{ $log->created_at->diffForHumans() }}</div>
+          </td>
           <td>{{ $log->username ?? 'System' }}</td>
-          <td>{{ $log->module }}</td>
-          <td>{{ $log->action }}</td>
-          <td>{{ $log->details }}</td>
+          <td>
+            @php
+              $modColors = [
+                'Inventory'  => 'background:#fff3e0;color:#e65100;',
+                'Orders'     => 'background:#e3f2fd;color:#1565c0;',
+                'Production' => 'background:#f3e5f5;color:#6a1b9a;',
+                'Reports'    => 'background:#e8f5e9;color:#1a6b47;',
+                'Settings'   => 'background:#fce4ec;color:#880e4f;',
+                'Users'      => 'background:#e0f7fa;color:#006064;',
+              ];
+              $modStyle = $modColors[$log->module] ?? 'background:#f0f0f0;color:#555;';
+            @endphp
+            <span style="{{ $modStyle }} padding:3px 10px; border-radius:99px; font-size:0.75rem; font-weight:600;">{{ $log->module }}</span>
+          </td>
+          <td>
+            @php
+              $action = strtolower($log->action);
+              if (str_contains($action, 'delete') || str_contains($action, 'archive') || str_contains($action, 'restore')) {
+                $actionStyle = 'background:#fdecea;color:#c62828;';
+              } elseif (str_contains($action, 'update') || str_contains($action, 'edit') || str_contains($action, 'changed')) {
+                $actionStyle = 'background:#fff8e1;color:#f57c00;';
+              } else {
+                $actionStyle = 'background:#e8f5e9;color:#1a6b47;';
+              }
+            @endphp
+            <span style="{{ $actionStyle }} padding:3px 10px; border-radius:99px; font-size:0.75rem; font-weight:600;">{{ $log->action }}</span>
+          </td>
+          <td style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; color:#555; font-size:0.85rem;"
+              title="{{ $log->details }}"
+              onclick="this.style.whiteSpace = this.style.whiteSpace === 'normal' ? 'nowrap' : 'normal'">
+            {{ $log->details }}
+          </td>
         </tr>
         @empty
         <tr>
-          <td colspan="5" style="text-align:center;padding:2rem;color:#888;">No logs found.</td>
+          <td colspan="5" style="text-align:center;padding:3rem;color:#aaa;">
+            <i class="fas fa-clipboard-list" style="font-size:2rem;margin-bottom:0.75rem;display:block;"></i>
+            No activity logs found for the selected filters.
+          </td>
         </tr>
         @endforelse
       </tbody>
@@ -133,6 +165,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
+
+  // Auto-submit logs filter
+const logsForm = document.getElementById('logsFilterForm');
+document.querySelector('[name="module"]')?.addEventListener('change', () => logsForm.submit());
+document.querySelector('[name="start_date"]')?.addEventListener('change', () => logsForm.submit());
+document.querySelector('[name="end_date"]')?.addEventListener('change', () => logsForm.submit());
 
 function exportCSV() {
   const table = document.getElementById('logTable');

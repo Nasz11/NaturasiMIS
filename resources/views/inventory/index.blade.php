@@ -38,6 +38,11 @@ $unitMap = [
     <i class="fas fa-exclamation-circle"></i> {{ $errors->first('archive') }}
   </div>
 @endif
+@if($errors->has('quantity'))
+  <div class="error-message" id="errorAlert" style="background:#fdecea;color:#c62828;padding:12px 16px;border-radius:8px;margin-bottom:1rem;display:flex;align-items:center;gap:8px;">
+    <i class="fas fa-exclamation-circle"></i> {{ $errors->first('quantity') }}
+  </div>
+@endif
 
   <div class="module-header">
     <h2><i class="fas fa-box"></i> Inventory Records</h2>
@@ -85,7 +90,8 @@ $unitMap = [
     <form method="GET" action="{{ route('inventory.index') }}" style="display:flex;align-items:center;">
       <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:5px 10px;">
         <i class="fas fa-calendar-alt" style="color:#1a6b47;font-size:0.75rem;"></i>
-        <input type="date" name="date" value="{{ $date }}" onchange="this.form.submit()"
+       <input type="date" name="date" value="{{ $date }}" onchange="this.form.submit()"
+          min="2026-01-01" max="{{ date('Y-m-d') }}"
           style="border:none;outline:none;font-size:0.8rem;font-weight:600;color:#333;background:transparent;cursor:pointer;" />
       </div>
     </form>
@@ -120,7 +126,34 @@ $unitMap = [
     display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;
   }
   #colToggleBar button.col-on .check-icon { background:#1a6b47;border-color:#1a6b47;color:#fff; }
+  .status-tag.in-stock-muted { background:#e8f5e9; color:#2e7d52; font-weight:600; border-radius:20px; padding:3px 12px; font-size:0.78rem; }
   </style>
+
+  {{-- SUMMARY BAR --}}
+  @php
+    $totalItems = $items->count();
+    $inStockCount = $items->filter(fn($i) => $i->status === 'In Stock')->count();
+    $lowStockCount = $items->filter(fn($i) => $i->status === 'Low Stock')->count();
+    $outOfStockCount = $items->filter(fn($i) => $i->status === 'Out of Stock')->count();
+  @endphp
+  <div id="inventorySummaryBar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1rem;">
+    <span style="background:#f0f0f0;color:#333;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+      {{ $totalItems }} Total
+    </span>
+    @if($outOfStockCount > 0)
+    <span style="background:#fdecea;color:#c62828;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:700;">
+      🔴 {{ $outOfStockCount }} Out of Stock
+    </span>
+    @endif
+    @if($lowStockCount > 0)
+    <span style="background:#fff3e0;color:#e65100;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:700;">
+      🟠 {{ $lowStockCount }} Low Stock
+    </span>
+    @endif
+    <span style="background:#e8f5e9;color:#1a6b47;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+      🟢 {{ $inStockCount }} In Stock
+    </span>
+  </div>
 
   {{-- CURRENT STOCK TABLE --}}
   <div id="activeTable">
@@ -139,7 +172,7 @@ $unitMap = [
            $ending        = $starting + $inboundQty - $outboundQty;
 $currentStock  = $item->computedQuantity();
 $discrepancy   = $ending - $currentStock;
-$status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
+$status = $ending <= 0 ? 'Out of Stock' : ($ending <= $item->reorder_level ? 'Low Stock' : 'In Stock');
           @endphp
           <tr
             data-id="{{ $item->id }}"
@@ -166,6 +199,10 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         </tbody>
       </table>
     </div>
+    <div class="pagination-wrapper" style="margin-top:1rem;">
+      <p class="pagination-info" id="invPaginationInfo"></p>
+      <div class="custom-pagination-nav" id="invPaginationNav"></div>
+    </div>
   </div>
 
   {{-- INBOUND TABLE --}}
@@ -183,7 +220,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         <thead>
           <tr>
            <th>Date</th><th>Product</th><th>Category</th><th>Quantity</th>
-            <th>Unit</th><th>Reference/Invoice</th><th>Remarks</th><th>Expiry Date</th><th>Recorded By</th>
+            <th>Unit</th><th>Remarks</th><th>Expiry Date</th><th>Recorded By</th>
           </tr>
         </thead>
         <tbody>
@@ -194,7 +231,6 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
             <td>{{ $movement->item->category }}</td>
             <td style="color:#1a6b47;font-weight:600;">+{{ $movement->quantity }}</td>
             <td>{{ $movement->item->unit }}</td>
-           <td>{{ $movement->reference ?? '—' }}</td>
             <td>{{ $movement->remarks ?? '—' }}</td>
             <td>
               @if($movement->expiry_date)
@@ -218,6 +254,10 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
         </tbody>
       </table>
     </div>
+    <div class="pagination-wrapper" style="margin-top:1rem;">
+      <p class="pagination-info" id="inboundPaginationInfo"></p>
+      <div class="custom-pagination-nav" id="inboundPaginationNav"></div>
+    </div>
   </div>
 
   {{-- OUTBOUND TABLE --}}
@@ -239,14 +279,14 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
           </tr>
         </thead>
         <tbody>
-          @forelse($outboundMovements->flatten() as $movement)
+         @forelse($outboundMovements->flatten()->sortBy([['movement_date', 'desc'], ['reference', 'desc']]) as $movement)
           <tr>
             <td>{{ \Carbon\Carbon::parse($movement->movement_date)->format('Y-m-d') }}</td>
             <td>{{ $movement->item->product_name }}</td>
             <td>{{ $movement->item->category }}</td>
             <td style="color:#c62828;font-weight:600;">-{{ $movement->quantity }}</td>
             <td>{{ $movement->item->unit }}</td>
-          <td>{{ $movement->reference ?? '—' }}</td>
+            <td>{{ $movement->reference ?? '—' }}</td>
             <td>{{ $movement->remarks ?? '—' }}</td>
             <td>{{ $movement->recordedBy->username ?? 'System' }}</td>
           </tr>
@@ -255,6 +295,10 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
           @endforelse
         </tbody>
       </table>
+    </div>
+    <div class="pagination-wrapper" style="margin-top:1rem;">
+      <p class="pagination-info" id="outboundPaginationInfo"></p>
+      <div class="custom-pagination-nav" id="outboundPaginationNav"></div>
     </div>
   </div>
 
@@ -488,12 +532,9 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
       </div>
       <div class="form-group">
         <label>Date</label>
-        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" />
+        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" min="2026-01-01" max="{{ date('Y-m-d') }}" />
       </div>
-      <div class="form-group">
-        <label>Reference / Invoice No.</label>
-        <input type="text" name="reference" placeholder="e.g. INV-2026-001" />
-      </div>
+
      <div class="form-group">
         <label>Remarks</label>
         <input type="text" name="remarks" placeholder="Optional notes" />
@@ -532,7 +573,7 @@ $status        = $ending > 0 ? 'In Stock' : 'Out of Stock';
       </div>
       <div class="form-group">
         <label>Date</label>
-        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" />
+        <input type="date" name="movement_date" required value="{{ date('Y-m-d') }}" min="2026-01-01" max="{{ date('Y-m-d') }}" />
       </div>
       <div class="form-group">
         <label>Reference</label>
@@ -562,13 +603,13 @@ setTimeout(() => document.getElementById('errorAlert')?.remove(), 5000);
 
 const invColumns = [
   { key:'product',  label:'Product Name',       default:true  },
-  { key:'category', label:'Category',            default:true  },
-  { key:'start',    label:'Starting Inventory',  default:true  },
+  { key:'category', label:'Category',            default:false  },
+ { key:'start',    label:'Starting Inventory',  default:false  },
   { key:'inbound',  label:'Inbound',             default:true  },
   { key:'outbound', label:'Outbound',            default:true  },
   { key:'end',      label:'Ending Inventory',    default:true  },
   { key:'unit',     label:'Unit',                default:true  },
-  { key:'cost',     label:'Cost/Unit (₱)',       default:true  },
+  { key:'cost',     label:'Cost/Unit (₱)',       default:false    },
   { key:'discrepancy', label:'Discrepancy',      default:true  },
   { key:'status',   label:'Status',              default:true  },
   { key:'actions',  label:'Actions',             default:true  },
@@ -607,8 +648,13 @@ function renderInvTable() {
       const td = document.createElement('td');
       if (c.key === 'status') {
         const status = row.dataset.status;
-        const cls = status === 'In Stock' ? 'active' : 'inactive';
+        const cls = status === 'In Stock' ? 'in-stock-muted' : (status === 'Low Stock' ? 'low' : 'inactive');
         td.innerHTML = `<span class="status-tag ${cls}">${status}</span>`;
+        // Row highlighting — dark mode aware
+        const isDark = document.body.classList.contains('theme-dark');
+        if (status === 'Out of Stock') row.style.background = isDark ? '#2a1a1a' : '#fff5f5';
+        else if (status === 'Low Stock') row.style.background = isDark ? '#2a1f10' : '#fff8f0';
+        else row.style.background = '';
         } else if (c.key === 'discrepancy') {
   const raw = parseFloat(row.dataset.discrepancyraw);
   if (raw > 0) {
@@ -673,7 +719,6 @@ function renderInvTable() {
 
 
 renderInvTable();
-
 // Show Add button on initial load if on Current Stock tab
 const addBtn = document.getElementById('openAddItem');
 if (addBtn) addBtn.style.display = 'inline-flex';
@@ -689,6 +734,12 @@ document.addEventListener('click', function(e) {
     dropdown.classList.remove('open');
   }
 });
+
+@if(session('tab'))
+window.addEventListener('DOMContentLoaded', function() {
+  switchTab('{{ session("tab") }}');
+});
+@endif
 
 function switchTab(tab) {
   document.getElementById('activeTable').style.display   = tab === 'active'   ? 'block' : 'none';
@@ -712,8 +763,13 @@ function switchTab(tab) {
   const colBtn = document.getElementById('colToggleBtn');
   if (colBtn) colBtn.style.display = tab === 'active' ? 'inline-flex' : 'none';
 
-  const datePicker = document.querySelector('#inventorySection form[action]');
+ const datePicker = document.querySelector('#inventorySection form[action]');
   if (datePicker) datePicker.style.display = tab === 'active' ? 'flex' : 'none';
+  const summaryBar = document.getElementById('inventorySummaryBar');
+  if (summaryBar) summaryBar.style.display = tab === 'active' ? 'block' : 'none';
+
+  if (tab === 'inbound')  inboundPaginate();
+  if (tab === 'outbound') outboundPaginate();
 }
 
 function filterProducts(mode) {
@@ -790,11 +846,155 @@ document.getElementById('closeAddOutbound')?.addEventListener('click', () => {
   document.body.classList.remove('modal-open');
 });
 
-document.getElementById('inventorySearch')?.addEventListener('input', function () {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('#invTableBody tr').forEach(row => {
-    row.style.display = row.dataset.product?.toLowerCase().includes(q) ? '' : 'none';
+const INV_PER_PAGE = 10;
+let invCurrentPage = 1;
+let invFilteredRows = [];
+
+function invPaginate() {
+  const rows = Array.from(document.querySelectorAll('#invTableBody tr'));
+  const q = document.getElementById('inventorySearch')?.value.toLowerCase() ?? '';
+  invFilteredRows = rows.filter(row => row.dataset.product?.toLowerCase().includes(q));
+
+  const totalPages = Math.ceil(invFilteredRows.length / INV_PER_PAGE);
+  if (invCurrentPage > totalPages) invCurrentPage = 1;
+
+  rows.forEach(r => r.style.display = 'none');
+  const start = (invCurrentPage - 1) * INV_PER_PAGE;
+  invFilteredRows.slice(start, start + INV_PER_PAGE).forEach(r => r.style.display = '');
+
+  const from = invFilteredRows.length ? start + 1 : 0;
+  const to   = Math.min(start + INV_PER_PAGE, invFilteredRows.length);
+  const info = `Showing ${from}–${to} of ${invFilteredRows.length} items`;
+  document.getElementById('invPaginationInfo').textContent = info;
+
+  ['invPaginationNav'].forEach(id => {
+    const nav = document.getElementById(id);
+    nav.innerHTML = '';
+
+    const prev = document.createElement(invCurrentPage === 1 ? 'span' : 'a');
+    prev.className = 'pg-btn' + (invCurrentPage === 1 ? ' pg-disabled' : '');
+    prev.innerHTML = '&#8249;';
+    if (invCurrentPage > 1) prev.href = '#';
+    prev.addEventListener('click', e => { e.preventDefault(); if(invCurrentPage>1){invCurrentPage--;invPaginate();} });
+    nav.appendChild(prev);
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - invCurrentPage) <= 1) {
+        const a = document.createElement(i === invCurrentPage ? 'span' : 'a');
+        a.className = 'pg-btn' + (i === invCurrentPage ? ' pg-active' : '');
+        a.textContent = i;
+        if (i !== invCurrentPage) { a.href = '#'; a.addEventListener('click', e => { e.preventDefault(); invCurrentPage=i; invPaginate(); }); }
+        nav.appendChild(a);
+      } else if (
+        (i === invCurrentPage - 2 && i > 1) ||
+        (i === invCurrentPage + 2 && i < totalPages)
+      ) {
+        const dots = document.createElement('span');
+        dots.className = 'pg-btn pg-dots';
+        dots.textContent = '···';
+        nav.appendChild(dots);
+      }
+    }
+
+    const next = document.createElement(invCurrentPage === totalPages || totalPages === 0 ? 'span' : 'a');
+    next.className = 'pg-btn' + (invCurrentPage === totalPages || totalPages === 0 ? ' pg-disabled' : '');
+    next.innerHTML = '&#8250;';
+    if (invCurrentPage < totalPages) next.href = '#';
+    next.addEventListener('click', e => { e.preventDefault(); if(invCurrentPage<totalPages){invCurrentPage++;invPaginate();} });
+    nav.appendChild(next);
   });
+}
+
+document.getElementById('inventorySearch')?.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    invCurrentPage = 1;
+    invPaginate();
+  }
 });
+
+invPaginate();
+
+// ── INBOUND PAGINATION ──
+const INBOUND_PER_PAGE = 10;
+let inboundPage = 1;
+
+function inboundPaginate() {
+  const rows = Array.from(document.querySelectorAll('#inboundMovementsTable tbody tr'));
+  const dataRows = rows.filter(r => r.cells.length > 1);
+  const totalPages = Math.ceil(dataRows.length / INBOUND_PER_PAGE);
+  if (inboundPage > totalPages) inboundPage = 1;
+
+  dataRows.forEach(r => r.style.display = 'none');
+  const start = (inboundPage - 1) * INBOUND_PER_PAGE;
+  dataRows.slice(start, start + INBOUND_PER_PAGE).forEach(r => r.style.display = '');
+
+  const from = dataRows.length ? start + 1 : 0;
+  const to   = Math.min(start + INBOUND_PER_PAGE, dataRows.length);
+  document.getElementById('inboundPaginationInfo').textContent = `Showing ${from}–${to} of ${dataRows.length} records`;
+
+  renderPagNav('inboundPaginationNav', inboundPage, totalPages, (p) => { inboundPage = p; inboundPaginate(); });
+}
+
+// ── OUTBOUND PAGINATION ──
+const OUTBOUND_PER_PAGE = 10;
+let outboundPage = 1;
+
+function outboundPaginate() {
+  const rows = Array.from(document.querySelectorAll('#outboundMovementsTable tbody tr'));
+  const dataRows = rows.filter(r => r.cells.length > 1);
+  const totalPages = Math.ceil(dataRows.length / OUTBOUND_PER_PAGE);
+  if (outboundPage > totalPages) outboundPage = 1;
+
+  dataRows.forEach(r => r.style.display = 'none');
+  const start = (outboundPage - 1) * OUTBOUND_PER_PAGE;
+  dataRows.slice(start, start + OUTBOUND_PER_PAGE).forEach(r => r.style.display = '');
+
+  const from = dataRows.length ? start + 1 : 0;
+  const to   = Math.min(start + OUTBOUND_PER_PAGE, dataRows.length);
+  document.getElementById('outboundPaginationInfo').textContent = `Showing ${from}–${to} of ${dataRows.length} records`;
+
+  renderPagNav('outboundPaginationNav', outboundPage, totalPages, (p) => { outboundPage = p; outboundPaginate(); });
+}
+
+// ── SHARED PAGINATION NAV RENDERER ──
+function renderPagNav(navId, current, totalPages, onPageClick) {
+  const nav = document.getElementById(navId);
+  nav.innerHTML = '';
+
+  const prev = document.createElement(current === 1 ? 'span' : 'a');
+  prev.className = 'pg-btn' + (current === 1 ? ' pg-disabled' : '');
+  prev.innerHTML = '&#8249;';
+  if (current > 1) { prev.href = '#'; prev.addEventListener('click', e => { e.preventDefault(); onPageClick(current - 1); }); }
+  nav.appendChild(prev);
+
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - current) <= 1) {
+      const a = document.createElement(i === current ? 'span' : 'a');
+      a.className = 'pg-btn' + (i === current ? ' pg-active' : '');
+      a.textContent = i;
+      if (i !== current) { a.href = '#'; a.addEventListener('click', e => { e.preventDefault(); onPageClick(i); }); }
+      nav.appendChild(a);
+    } else if ((i === current - 2 && i > 1) || (i === current + 2 && i < totalPages)) {
+      const dots = document.createElement('span');
+      dots.className = 'pg-btn pg-dots';
+      dots.textContent = '···';
+      nav.appendChild(dots);
+    }
+  }
+
+  const next = document.createElement(current === totalPages || totalPages === 0 ? 'span' : 'a');
+  next.className = 'pg-btn' + (current === totalPages || totalPages === 0 ? ' pg-disabled' : '');
+  next.innerHTML = '&#8250;';
+  if (current < totalPages) { next.href = '#'; next.addEventListener('click', e => { e.preventDefault(); onPageClick(current + 1); }); }
+  nav.appendChild(next);
+}
+
+inboundPaginate();
+outboundPaginate();
 </script>
 @endpush
+
+
+
+
+

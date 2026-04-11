@@ -1529,7 +1529,8 @@
     body.theme-dark .module-header, body.theme-dark .table-container { background: #1a1a2e !important; }
     body.theme-dark th { background: #0f0f1a !important; }
     body.theme-dark td { color: #eee !important; border-color: #333 !important; }
-    body.theme-dark tr:nth-child(even) { background: #16213e !important; }
+    body.theme-dark #invTableBody tr:nth-child(even) { background: #16213e; }
+body.theme-dark tbody tr:nth-child(even) { background: #16213e !important; }
     body.theme-dark tbody tr:hover { background: #0e1a2e !important; }
 
     /* ── LIGHT THEME ── */
@@ -1705,11 +1706,11 @@
   height: 40px !important;
   padding: 0 0.6rem !important;
   border-radius: 10px !important;
-  border: none !important;
+  border: 1px solid #c8ebd1 !important;
   font-size: 0.95rem !important;
-  color: #555 !important;
+  color: #1a6b47 !important;
   text-decoration: none !important;
-  background: #f0f2f5 !important;
+  background: #e8f5e9 !important;
   transition: all 0.2s !important;
   font-weight: 600 !important;
   cursor: pointer !important;
@@ -1726,6 +1727,28 @@
   color: #fff !important;
   font-weight: 700 !important;
   box-shadow: 0 4px 12px rgba(26, 107, 71, 0.3) !important;
+}
+
+.pg-btn:not(.pg-disabled):not(.pg-dots):not(.pg-active) {
+  background: #e8f5e9 !important;
+  color: #1a6b47 !important;
+  border: 1px solid #c8ebd1 !important;
+}
+
+.pg-btn:not(.pg-disabled):not(.pg-dots):not(.pg-active):hover {
+  background: #1a6b47 !important;
+  color: #fff !important;
+}
+
+body.theme-dark .pg-btn:not(.pg-disabled):not(.pg-dots):not(.pg-active) {
+  background: #0f1a14 !important;
+  color: #a5d6a7 !important;
+  border: 1px solid #1a6b47 !important;
+}
+
+body.theme-dark .pg-btn:not(.pg-disabled):not(.pg-dots):not(.pg-active):hover {
+  background: #1a6b47 !important;
+  color: #fff !important;
 }
 
 .pg-btn.pg-disabled {
@@ -1799,8 +1822,9 @@ body.theme-dark .pagination-wrapper {
 }
 
 body.theme-dark .pg-btn {
-  background: #16213e !important;
-  color: #ccc !important;
+  background: #0f1a14 !important;
+  color: #a5d6a7 !important;
+  border-color: #1a6b47 !important;
 }
 
 body.theme-dark .pg-btn:hover {
@@ -2157,4 +2181,226 @@ body.theme-dark canvas {
 body.theme-dark .chartjs-render-monitor,
 body.theme-dark #inventoryChart {
   color: #eee !important;
+}
+
+/* ── DARK MODE: REPORT SUMMARY CARDS (inline colored backgrounds) ── */
+body.theme-dark [style*="background:#f0f7f4"],
+body.theme-dark [style*="background: #f0f7f4"] {
+  background: #1a1a2e !important;
+  color: #eee !important;
+  border-color: #1a6b47 !important;
+}
+
+body.theme-dark [style*="background:#fdecea"],
+body.theme-dark [style*="background: #fdecea"] {
+  background: #2a1a1a !important;
+  color: #eee !important;
+}
+
+body.theme-dark [style*="background:#fff3e0"],
+body.theme-dark [style*="background: #fff3e0"] {
+  background: #2a1f10 !important;
+  color: #eee !important;
+}
+
+body.theme-dark [style*="background:#e8f5e9"],
+body.theme-dark [style*="background: #e8f5e9"] {
+  background: #0f1a14 !important;
+  color: #eee !important;
+}
+
+body.theme-dark [style*="background:#e3f2fd"],
+body.theme-dark [style*="background: #e3f2fd"] {
+  background: #0f1a2e !important;
+  color: #eee !important;
+}
+
+/* ── DARK MODE: STATUS BADGE PILLS (inventory/production counts) ── */
+body.theme-dark span[style*="background:#f0f0f0"],
+body.theme-dark span[style*="background: #f0f0f0"] {
+  background: #16213e !important;
+  color: #ccc !important;
+}
+
+body.theme-dark span[style*="background:#fdecea"],
+body.theme-dark span[style*="background: #fdecea"] {
+  background: #2a1a1a !important;
+  color: #ef9a9a !important;
+}
+
+body.theme-dark span[style*="background:#fff3e0"],
+body.theme-dark span[style*="background: #fff3e0"] {
+  background: #2a1f10 !important;
+  color: #ffcc80 !important;
+}
+
+body.theme-dark span[style*="background:#e8f5e9"],
+body.theme-dark span[style*="background: #e8f5e9"] {
+  background: #0f1a14 !important;
+  color: #a5d6a7 !important;
+}
+
+body.theme-dark span[style*="background:#e3f2fd"],
+body.theme-dark span[style*="background: #e3f2fd"] {
+  background: #0f1a2e !important;
+  color: #90caf9 !important;
+}
+
+/* ── DARK MODE: REPORT INSIGHTS BOX ── */
+body.theme-dark [style*="background:#f5f5f5"] {
+  background: #16213e !important;
+  color: #eee !important;
+}
+
+/* ── DARK MODE: MODULE HEADER & FILTER FORM BARS ── */
+body.theme-dark .module-header {
+  background: #1a1a2e !important;
+  border-color: #333 !important;
+}
+
+body.theme-dark .module-header h2 {
+  color: #eee !important;
+}
+
+/* ── DARK MODE: INLINE FORM/FILTER INPUTS IN MODULE HEADER ── */
+body.theme-dark .module-header input[type="date"],
+body.theme-dark .module-header select,
+body.theme-dark .module-header input[type="text"] {
+  background: #16213e !important;
+  color: #eee !important;
+  border-color: #444 !important;
+}
+
+/* ── DARK MODE: REPORT SUMMARY TEXT COLORS ── */
+body.theme-dark [style*="color:#c62828"],
+body.theme-dark [style*="color: #c62828"] {
+  color: #ef9a9a !important;
+}
+
+body.theme-dark [style*="color:#e65100"],
+body.theme-dark [style*="color: #e65100"] {
+  color: #ffcc80 !important;
+}
+
+body.theme-dark [style*="color:#f57c00"],
+body.theme-dark [style*="color: #f57c00"] {
+  color: #ffcc80 !important;
+}
+
+/* ── DARK MODE: OUT OF STOCK ROW BACKGROUNDS ── */
+body.theme-dark tr[style*="background:#fff0f0"],
+body.theme-dark tr[style*="background: #fff0f0"],
+body.theme-dark tr[style*="background:#fef2f2"],
+body.theme-dark tr[style*="background: #fef2f2"],
+body.theme-dark tr[style*="background:#fff8f0"],
+body.theme-dark tr[style*="background: #fff8f0"],
+body.theme-dark tr[style*="background:rgba(255"],
+body.theme-dark tr[style*="background: rgba(255"] {
+  background: #2a1a1a !important;
+}
+
+/* ── DARK MODE: CLEAR/RESET BUTTON IN HEADER ── */
+body.theme-dark a[style*="background:#eee"],
+body.theme-dark a[style*="background: #eee"],
+body.theme-dark button[style*="background:#eee"],
+body.theme-dark button[style*="background: #eee"] {
+  background: #16213e !important;
+  color: #ccc !important;
+}
+
+/* ── DARK MODE: SYSTEM SETTINGS CARDS ── */
+body.theme-dark .content-card,
+body.theme-dark [style*="background:#fff"][style*="border-radius"],
+body.theme-dark [style*="background: #fff"][style*="border-radius"] {
+  background: #16213e !important;
+  color: #eee !important;
+  border-color: #333 !important;
+}
+
+/* System info display box */
+body.theme-dark [style*="background:#f9f9f9"],
+body.theme-dark [style*="background: #f9f9f9"],
+body.theme-dark [style*="background:#fafafa"],
+body.theme-dark [style*="background: #fafafa"] {
+  background: #16213e !important;
+  color: #eee !important;
+}
+
+/* System health status badges */
+body.theme-dark [style*="background:#e8f5e9"][style*="border-radius"],
+body.theme-dark span[style*="background:#1a6b47"],
+body.theme-dark span[style*="background: #1a6b47"] {
+  background: #0f1a14 !important;
+  color: #a5d6a7 !important;
+}
+
+/* Last backup bar */
+body.theme-dark [style*="background:#fff"][style*="border:1px solid"],
+body.theme-dark [style*="background: #fff"][style*="border:1px solid"] {
+  background: #16213e !important;
+  border-color: #444 !important;
+  color: #eee !important;
+}
+
+/* Settings section labels */
+body.theme-dark [style*="color:#555"],
+body.theme-dark [style*="color: #555"] {
+  color: #aaa !important;
+}
+
+body.theme-dark [style*="color:#444"],
+body.theme-dark [style*="color: #444"] {
+  color: #bbb !important;
+}
+
+/* ── DARK MODE: SYSTEM SETTINGS INNER CARDS ── */
+body.theme-dark [style*="background:#f8faf9"],
+body.theme-dark [style*="background: #f8faf9"] {
+  background: #16213e !important;
+  border-color: #333 !important;
+  color: #eee !important;
+}
+
+body.theme-dark [style*="border:1px solid #e0ece6"],
+body.theme-dark [style*="border: 1px solid #e0ece6"],
+body.theme-dark [style*="border-top:1px solid #e0ece6"],
+body.theme-dark [style*="border-top: 1px solid #e0ece6"] {
+  border-color: #333 !important;
+}
+
+body.theme-dark [style*="color:#1a3a2a"],
+body.theme-dark [style*="color: #1a3a2a"] {
+  color: #eee !important;
+}
+/* ── DARK MODE: BTN-RESET & BTN-REFRESH ── */
+body.theme-dark .btn-reset,
+body.theme-dark .btn-refresh {
+  background: #16213e !important;
+  color: #a5d6a7 !important;
+  border-color: #1a6b47 !important;
+}
+
+body.theme-dark .btn-reset:hover,
+body.theme-dark .btn-refresh:hover {
+  background: #1a6b47 !important;
+  color: #fff !important;
+}
+
+/* ── DARK MODE: MODULE BADGE PILLS (logs page) ── */
+body.theme-dark span[style*="background:#f3e5f5"],
+body.theme-dark span[style*="background: #f3e5f5"] {
+  background: #1e0f2a !important;
+  color: #ce93d8 !important;
+}
+
+body.theme-dark span[style*="background:#fce4ec"],
+body.theme-dark span[style*="background: #fce4ec"] {
+  background: #2a0f1a !important;
+  color: #f48fb1 !important;
+}
+
+body.theme-dark span[style*="background:#e0f7fa"],
+body.theme-dark span[style*="background: #e0f7fa"] {
+  background: #0f1e2a !important;
+  color: #80deea !important;
 }

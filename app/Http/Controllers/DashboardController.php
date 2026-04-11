@@ -74,10 +74,12 @@ return view('dashboard.index', compact(
                         ->orWhere('category', 'like', "%{$q}%")->get();
 
         $production = ProductionBatch::where('batch_number', 'like', "%{$q}%")
-                        ->orWhere('product_type', 'like', "%{$q}%")->get();
+                        ->orWhere('product_type', 'like', "%{$q}%")->orWhere('production_date', 'like', "%{$q}%")->get();
+        $batches = collect();
 
         ActivityLog::record('Search', 'Searched', "Searched for: {$q}");
 
-        return view('search.index', compact('q', 'inventory', 'production'));
+        return view('search.index', compact('q', 'inventory', 'production', 'batches'));
     }
 }
+

@@ -36,6 +36,7 @@ class InventoryController extends Controller
     $inboundMovements = InventoryMovement::with(['item', 'recordedBy'])
         ->where('type', 'inbound')
         ->whereDate('movement_date', $selectedDate)
+        ->orderByDesc('reference')
         ->orderByDesc('movement_date')
         ->get()
         ->groupBy('inventory_item_id');
@@ -43,6 +44,7 @@ class InventoryController extends Controller
     $outboundMovements = InventoryMovement::with(['item', 'recordedBy'])
         ->where('type', 'outbound')
         ->whereDate('movement_date', $selectedDate)
+        ->orderByDesc('reference')
         ->orderByDesc('movement_date')
         ->get()
         ->groupBy('inventory_item_id');
@@ -149,7 +151,7 @@ class InventoryController extends Controller
         if ($request->type === 'outbound') {
             $currentStock = $item->computedQuantity();
             if ($currentStock < $request->quantity) {
-                return back()->withErrors(['quantity' => "Insufficient stock. Current stock: {$currentStock} {$item->unit}"]);
+                return back()->withErrors(['quantity' => "Cannot record outbound for {$item->product_name}: insufficient stock. Current stock: {$currentStock} {$item->unit}"])->with('tab', $request->type);
             }
         }
 
@@ -171,7 +173,7 @@ class InventoryController extends Controller
 
         $type = ucfirst($request->type);
         ActivityLog::record('Inventory', "{$type} Movement", "{$type} {$request->quantity} {$item->unit} of {$item->product_name}");
-        return back()->with('success', "Movement recorded successfully.");
+        return back()->with('success', "Movement recorded successfully.")->with('tab', $request->type);
     }
 
     public function archive(InventoryItem $inventoryItem)
@@ -202,3 +204,4 @@ class InventoryController extends Controller
         return back()->with('success', 'Item permanently deleted.');
     }
 }
+

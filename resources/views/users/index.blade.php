@@ -14,7 +14,7 @@
   @endif
 
     <div class="module-header">
-      <h2><i class="fas fa-users"></i> User Management</h2>idk
+      <h2><i class="fas fa-users"></i> User Management</h2>
       <div class="user-actions">
         <button class="btn-primary" id="openAddUser">
           <i class="fas fa-plus"></i> Add User
@@ -25,10 +25,10 @@
     {{-- TABS --}}
     <div style="display:flex; gap:0.5rem; margin-bottom:1.2rem;">
       <button class="btn-tab active" id="tabActive" onclick="switchTab('active')">
-        <i class="fas fa-users"></i> Active Users
+        <i class="fas fa-users"></i> Active Users ({{ $users->count() }})
       </button>
       <button class="btn-tab" id="tabArchived" onclick="switchTab('archived')">
-        <i class="fas fa-archive"></i> Archived Users
+        <i class="fas fa-archive"></i> Archived Users ({{ $archivedUsers->count() }})
       </button>
     </div>
 
@@ -42,7 +42,19 @@
           @forelse($users as $user)
           <tr>
             <td>{{ $user->username }}</td>
-            <td>{{ ucfirst($user->role) }}</td>
+            <td>
+              @php
+                $roleStyles = [
+                  'admin'      => 'background:#e8f5e9;color:#1a6b47;',
+                  'manager'    => 'background:#e3f2fd;color:#1565c0;',
+                  'inventory'  => 'background:#fff3e0;color:#e65100;',
+                  'production' => 'background:#f3e5f5;color:#6a1b9a;',
+                ];
+                $style = $roleStyles[$user->role] ?? 'background:#f0f0f0;color:#555;';
+                $label = ['admin'=>'Admin','manager'=>'Manager','inventory'=>'Inventory','production'=>'Production'][$user->role] ?? ucfirst($user->role);
+              @endphp
+              <span style="{{ $style }} padding:3px 10px; border-radius:99px; font-size:0.78rem; font-weight:600;">{{ $label }}</span>
+            </td>
             <td><span class="status-tag {{ $user->status === 'Active' ? 'active' : 'inactive' }}">{{ $user->status }}</span></td>
             <td class="actions-col">
               <button class="action-btn edit-btn"
@@ -52,11 +64,15 @@
                 data-status="{{ $user->status }}">
                 <i class="fas fa-pen"></i>
               </button>
-              @if($user->id !== auth()->id())
+              @if($user->id !== auth()->id() && $user->role !== 'admin')
               <form action="{{ route('users.destroy', $user) }}" method="POST" class="delete-form d-inline">
                 @csrf @method('DELETE')
                 <button type="button" class="action-btn delete-btn" title="Archive User"><i class="fas fa-archive"></i></button>
               </form>
+              @elseif($user->role === 'admin')
+              <button class="action-btn" title="Cannot archive system administrator" style="color:#ccc;cursor:not-allowed;" disabled>
+                <i class="fas fa-archive"></i>
+              </button>
               @endif
             </td>
           </tr>
@@ -77,7 +93,19 @@
           @forelse($archivedUsers as $user)
           <tr>
             <td>{{ $user->username }}</td>
-            <td>{{ ucfirst($user->role) }}</td>
+            <td>
+              @php
+                $roleStyles = [
+                  'admin'      => 'background:#e8f5e9;color:#1a6b47;',
+                  'manager'    => 'background:#e3f2fd;color:#1565c0;',
+                  'inventory'  => 'background:#fff3e0;color:#e65100;',
+                  'production' => 'background:#f3e5f5;color:#6a1b9a;',
+                ];
+                $style = $roleStyles[$user->role] ?? 'background:#f0f0f0;color:#555;';
+                $label = ['admin'=>'Admin','manager'=>'Manager','inventory'=>'Inventory','production'=>'Production'][$user->role] ?? ucfirst($user->role);
+              @endphp
+              <span style="{{ $style }} padding:3px 10px; border-radius:99px; font-size:0.78rem; font-weight:600;">{{ $label }}</span>
+            </td>
             <td>{{ $user->deleted_at->format('M d, Y') }}</td>
             <td class="actions-col">
               <button type="button" class="action-btn edit-btn restore-btn"

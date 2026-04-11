@@ -186,29 +186,34 @@
             }
 
             public function index(Request $request)
-            {
-                $search    = $request->get('search');
-                $activeTab = $request->get('tab', 'orders');
+{
+    $search    = $request->get('search');
+    $activeTab = $request->get('tab', 'orders');
+    $dateFrom  = $request->get('date_from');
+    $dateTo    = $request->get('date_to');
 
-                $orders = Order::with(['createdBy', 'client', 'items'])
-                    ->where('is_archived', false)
-                    ->when($search, fn($q) => $q->where('po_number', 'like', "%{$search}%")
-                        ->orWhere('client_name', 'like', "%{$search}%")
-                        ->orWhere('status', 'like', "%{$search}%"))
-                    ->latest()
-                    ->paginate(10)
-                    ->withQueryString();
+    $orders = Order::with(['createdBy', 'client', 'items'])
+        ->where('is_archived', false)
+        ->when($search, fn($q) => $q->where(fn($q2) => $q2
+            ->where('po_number', 'like', "%{$search}%")
+            ->orWhere('client_name', 'like', "%{$search}%")
+            ->orWhere('status', 'like', "%{$search}%")))
+        ->when($dateFrom, fn($q) => $q->whereDate('order_date', '>=', $dateFrom))
+        ->when($dateTo,   fn($q) => $q->whereDate('order_date', '<=', $dateTo))
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
 
-                $archivedOrders  = Order::with(['createdBy', 'client', 'items'])
-                    ->where('is_archived', true)
-                    ->latest()
-                    ->get();
-                $clients         = Client::where('is_archived', false)->orderBy('name')->get();
-                $archivedClients = Client::where('is_archived', true)->orderBy('name')->get();
-                $variants        = ProductVariant::orderBy('cheese_product')->orderBy('weight_grams')->get()->groupBy('cheese_product');
+    $archivedOrders  = Order::with(['createdBy', 'client', 'items'])
+        ->where('is_archived', true)
+        ->latest()
+        ->get();
+    $clients         = Client::where('is_archived', false)->orderBy('name')->get();
+    $archivedClients = Client::where('is_archived', true)->orderBy('name')->get();
+    $variants        = ProductVariant::orderBy('cheese_product')->orderBy('weight_grams')->get()->groupBy('cheese_product');
 
-                return view('orders.index', compact('orders', 'archivedOrders', 'clients', 'archivedClients', 'variants', 'search', 'activeTab'));
-            }
+    return view('orders.index', compact('orders', 'archivedOrders', 'clients', 'archivedClients', 'variants', 'search', 'activeTab', 'dateFrom', 'dateTo'));
+}
 
             public function preview(Request $request)
             {
@@ -531,7 +536,7 @@
                         'type'              => 'outbound',
                         'quantity'          => $needed,
                         'reference'         => $order->po_number,
-                        'remarks'           => 'Auto-deducted from confirmed order',
+                        'remarks'           => "Deducted for {$order->po_number} — {$order->client_name}",
                         'recorded_by'       => auth()->id(),
                         'movement_date'     => now(),
                     ]);
@@ -578,7 +583,7 @@
                             'type'              => 'inbound',
                             'quantity'          => $amount,
                             'reference'         => $order->po_number,
-                            'remarks'           => 'Restored from cancelled order',
+                            'remarks'           => "Restored — {$order->po_number} cancelled",
                             'recorded_by'       => auth()->id(),
                             'movement_date'     => now(),
                         ]);

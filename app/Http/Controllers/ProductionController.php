@@ -10,23 +10,23 @@ class ProductionController extends Controller
    public function index(Request $request)
 {
     $search = $request->get('search');
-
+    $dateFrom = $request->get('date_from', now()->subDays(7)->toDateString());
+    $dateTo = $request->get('date_to', now()->toDateString());
+    $statusFilter = $request->get('status_filter');
+    $productFilter = $request->get('product_filter');
     $batches = ProductionBatch::with('staff')
         ->where('is_archived', false)
-        ->when($search, fn($q) => $q->where('batch_number', 'like', "%{$search}%")
-            ->orWhere('product_type', 'like', "%{$search}%")
-            ->orWhere('status', 'like', "%{$search}%"))
-        ->orderByDesc('production_date')
-        ->paginate(10)
-        ->withQueryString();
+        ->when($search, fn($q) => $q->where('batch_number', 'like', "%{$search}%")->orWhere('product_type', 'like', "%{$search}%"))
+        ->when($dateFrom, fn($q) => $q->whereDate('production_date', '>=', $dateFrom))
+        ->when($dateTo, fn($q) => $q->whereDate('production_date', '<=', $dateTo))
+        ->when($statusFilter, fn($q) => $q->where('status', $statusFilter))
+        ->when($productFilter, fn($q) => $q->where('product_type', $productFilter))
+        ->orderByDesc('production_date')->paginate(10);
+    $archivedBatches = ProductionBatch::with('staff')->where('is_archived', true)->orderByDesc('production_date')->paginate(10);
+    $staff = User::where('status', 'Active')->get();
 
-    $archivedBatches = ProductionBatch::with('staff')
-        ->where('is_archived', true)
-        ->orderByDesc('production_date')
-        ->paginate(10)
-        ->withQueryString();
 
-$staff = User::where('status', 'Active')->get();
+
 
     $todayOrders = \App\Models\Order::with('items')
     ->where('status', 'Confirmed')

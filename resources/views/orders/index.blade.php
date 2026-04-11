@@ -21,12 +21,16 @@
         <div class="module-header">
           <h2><i class="fas fa-clipboard-list"></i> Production Orders</h2>
           <div class="actions">
-            <form method="GET" action="{{ route('orders.index') }}" style="display:flex;">
+           <form method="GET" action="{{ route('orders.index') }}" id="ordersFilterForm" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <input type="hidden" name="tab" value="{{ $activeTab }}">
               <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="text" name="search" placeholder="Search orders or clients..." class="input-search" value="{{ $search ?? '' }}" />
+                <input type="text" name="search" id="ordersSearch" placeholder="Search PO, client, or product..." class="input-search" value="{{ $search ?? '' }}" />
               </div>
+              <input type="date" name="date_from" id="ordersDateFrom" value="{{ request('date_from') }}" min="2026-01-01" max="{{ date('Y-m-d') }}" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;color:#333;" />
+              <span style="color:#aaa;font-size:0.8rem;">to</span>
+              <input type="date" name="date_to" id="ordersDateTo" value="{{ request('date_to') }}" min="2026-01-01" max="{{ date('Y-m-d') }}" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;color:#333;" />
+              <a href="{{ route('orders.index') }}" style="padding:8px 16px;background:#eee;color:#333;border-radius:8px;text-decoration:none;font-size:0.9rem;">Clear</a>
             </form>
           @if(auth()->user()->role !== 'manager')
   <button class="btn-primary" id="openCreateOrder" style="display:{{ $activeTab === 'orders' ? 'inline-flex' : 'none' }};">
@@ -58,7 +62,38 @@
 
       {{-- ORDERS TAB --}}
         <div id="mainTabOrders" style="display:{{ $activeTab === 'orders' ? 'block' : 'none' }};">
-        <div class="table-container" style="margin-top:1rem;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:1rem;margin-bottom:1rem;">
+          <span style="background:#f0f0f0;color:#333;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+            {{ $orders->total() }} Total
+          </span>
+          @php
+            $pendingCount = $orders->getCollection()->where('status','Pending')->count();
+            $confirmedCount = $orders->getCollection()->where('status','Confirmed')->count();
+            $completedCount = $orders->getCollection()->where('status','Completed')->count();
+            $cancelledCount = $orders->getCollection()->where('status','Cancelled')->count();
+          @endphp
+          @if($pendingCount > 0)
+          <span style="background:#fff3e0;color:#e65100;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:700;">
+            🟠 {{ $pendingCount }} Pending
+          </span>
+          @endif
+          @if($confirmedCount > 0)
+          <span style="background:#e3f2fd;color:#1565c0;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+            🔵 {{ $confirmedCount }} Confirmed
+          </span>
+          @endif
+          @if($completedCount > 0)
+          <span style="background:#e8f5e9;color:#1a6b47;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+            🟢 {{ $completedCount }} Completed
+          </span>
+          @endif
+          @if($cancelledCount > 0)
+          <span style="background:#fdecea;color:#c62828;padding:5px 14px;border-radius:99px;font-size:0.82rem;font-weight:600;">
+            🔴 {{ $cancelledCount }} Cancelled
+          </span>
+          @endif
+        </div>
+        <div class="table-container">
           <table>
             <thead>
               <tr>
@@ -75,7 +110,7 @@
             </thead>
             <tbody>
               @forelse($orders as $order)
-              <tr>
+              <tr style="{{ $order->status === 'Pending' ? 'background:#fff8f0;' : '' }}">
                 <td>{{ $order->po_number ?? '—' }}</td>
                 <td>{{ $order->client_name ?? '—' }}</td>
                 <td>{{ $order->order_date ? $order->order_date->format('Y-m-d') : '—' }}</td>
@@ -310,9 +345,12 @@
     {{-- CREATE ORDER MODAL --}}
       <div id="createOrderModal" class="modal">
         <div class="modal-content" style="max-width:780px; padding:0; overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#0e472d,#1a6b47); padding:1.5rem 2rem; display:flex; align-items:center; gap:12px;">
-            <i class="fas fa-clipboard-list" style="color:#fff; font-size:1.4rem;"></i>
-            <h2 style="color:#fff; margin:0; border:none; padding:0; font-size:1.4rem;">New Production Order</h2>
+          <div style="background:linear-gradient(135deg,#0e472d,#1a6b47); padding:1.5rem 2rem; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <i class="fas fa-clipboard-list" style="color:#fff; font-size:1.4rem;"></i>
+              <h2 style="color:#fff; margin:0; border:none; padding:0; font-size:1.4rem;">New Production Order</h2>
+            </div>
+            <button type="button" id="closeCreateOrder" style="background:rgba(255,255,255,0.15); border:none; color:#fff; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; line-height:1; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">×</button>
           </div>
           <div style="padding:2rem; overflow-y:auto; max-height:80vh;">
 
@@ -331,7 +369,7 @@
               </div>
               <div class="form-group" style="margin:0;">
                 <label>Order Date <span style="color:red;">*</span></label>
-                <input type="date" id="orderDateInput" value="{{ now()->format('Y-m-d') }}" style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
+<input type="date" id="orderDateInput" value="{{ now()->format('Y-m-d') }}" readonly style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc; background:#f5f5f5; cursor:not-allowed; color:#888;" />
               </div>
               <div class="form-group" style="margin:0;">
                 <label>Notes</label>
@@ -340,103 +378,117 @@
             </div>
 
       <hr style="margin:1rem 0;">
-            <p style="color:#666; margin-bottom:1rem; font-size:0.95rem;">Fill in the quantities for this order:</p>
+            <p style="font-size:0.85rem; color:#888; margin-bottom:1rem;">Fill in quantities for each product:</p>
 
-            {{-- BURRATA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Burrata</span>
-                <span id="burrataTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- BURRATA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Burrata</span>
+                <span id="burrataTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Burrata'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="burrata-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcTotal('burrata')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcTotal('burrata'); calcGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-            {{-- STRACCIATELLA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Stracciatella</span>
-                <span id="straccTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- STRACCIATELLA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Stracciatella</span>
+                <span id="straccTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Stracciatella'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="stracc-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcTotal('stracc')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcTotal('stracc'); calcGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-          {{-- CHERRY MOZZARELLA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Cherry Mozzarella</span>
-                <span id="cherryTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- CHERRY MOZZARELLA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Cherry Mozzarella</span>
+                <span id="cherryTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Cherry Mozzarella'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="cherry-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcTotal('cherry')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcTotal('cherry'); calcGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-            <hr style="margin:1rem 0;">
-
-        {{-- MOZZARELLA LOG & PROVOLA --}}
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-              <div class="form-group" style="margin:0;">
-                <label style="font-weight:700; color:#1a6b47;"><i class="fas fa-cheese"></i> Mozzarella Log (kg)</label>
-                <input type="number" min="0" step="0.01" placeholder="0"
-                  id="mozzaKgInput"
-                  data-variant-id="{{ $variants['Mozzarella Log'][0]->id ?? '' }}"
-                  style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label style="font-weight:700; color:#1a6b47;"><i class="fas fa-cheese"></i> Provola (kg)</label>
-                <input type="number" min="0" step="0.01" placeholder="0"
-                  id="provolaKgInput"
-                  data-variant-id="{{ $variants['Provola'][0]->id ?? '' }}"
-                  style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
+            {{-- OTHER PRODUCTS CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <span style="font-weight:600; color:#1a6b47; font-size:0.9rem; display:block; margin-bottom:0.75rem;"><i class="fas fa-cheese"></i> Other Products</span>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:10px 12px;">
+                  <span style="font-size:0.72rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">Mozzarella Log</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number" min="0" step="0.01" placeholder="0"
+                      id="mozzaKgInput"
+                      data-variant-id="{{ $variants['Mozzarella Log'][0]->id ?? '' }}"
+                      style="flex:1; border:none; background:transparent; font-size:1rem; font-weight:600; color:#1a6b47; padding:0;"
+                      oninput="calcGrandTotal();" />
+                    <span style="font-size:0.72rem; color:#aaa;">kg</span>
+                  </div>
+                </div>
+                <div style="background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:10px 12px;">
+                  <span style="font-size:0.72rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">Provola</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number" min="0" step="0.01" placeholder="0"
+                      id="provolaKgInput"
+                      data-variant-id="{{ $variants['Provola'][0]->id ?? '' }}"
+                      style="flex:1; border:none; background:transparent; font-size:1rem; font-weight:600; color:#1a6b47; padding:0;"
+                      oninput="calcGrandTotal();" />
+                    <span style="font-size:0.72rem; color:#aaa;">kg</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div id="orderValidationMsg" class="alert-message" style="display:none; margin-bottom:1rem;">
-              <i class="fas fa-exclamation-circle"></i> Please select a client, date, and at least one product.
+            {{-- GRAND TOTAL BAR --}}
+            <div style="background:#1a6b47; border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+              <span style="font-size:0.85rem; color:#a8d5b5; font-weight:500;">Total order weight</span>
+              <span id="grandTotalDisplay" style="font-size:1.2rem; font-weight:700; color:#fff;">0 kg</span>
+            </div>
+
+            <div id="orderValidationMsg" style="display:none; margin-bottom:1rem; background:#fdecea; color:#c62828 !important; padding:12px 16px; border-radius:8px; font-size:0.88rem; font-weight:500;">
+              <i class="fas fa-exclamation-circle"></i> <span id="orderValidationText">Please select a client.</span>
             </div>
 
             <div class="modal-buttons" style="margin-top:1rem;">
-              <button type="button" class="btn-cancel" id="closeCreateOrder">Cancel</button>
               <button type="button" class="btn-primary" id="previewOrder">
                 <i class="fas fa-eye"></i> Preview Ingredients
               </button>
@@ -482,7 +534,7 @@
               </div>
               <div class="form-group" style="margin:0;">
                 <label>Order Date <span style="color:red;">*</span></label>
-                <input type="date" name="order_date" id="editOrderDate" required style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
+                <input type="date" name="order_date" id="editOrderDate" required readonly style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc; background:#f5f5f5; cursor:not-allowed; color:#888;" />
               </div>
               <div class="form-group" style="margin:0;">
                 <label>Notes</label>
@@ -491,95 +543,110 @@
             </div>
 
             <hr style="margin:1rem 0;">
-            <p style="color:#666; margin-bottom:1rem; font-size:0.95rem;">Edit quantities for this order:</p>
+            <p style="font-size:0.85rem; color:#888; margin-bottom:1rem;">Edit quantities for each product:</p>
 
-            {{-- BURRATA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Burrata</span>
-                <span id="editBurrataTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- BURRATA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Burrata</span>
+                <span id="editBurrataTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Burrata'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="edit-burrata-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcEditTotal('burrata')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcEditTotal('burrata'); calcEditGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-            {{-- STRACCIATELLA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Stracciatella</span>
-                <span id="editStraccTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- STRACCIATELLA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Stracciatella</span>
+                <span id="editStraccTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Stracciatella'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="edit-stracc-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcEditTotal('stracc')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcEditTotal('stracc'); calcEditGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-            {{-- CHERRY MOZZARELLA GRID --}}
-            <div style="margin-bottom:1.5rem;">
-              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-                <span style="font-weight:700; color:#1a6b47; font-size:0.95rem;"><i class="fas fa-cheese"></i> Cherry Mozzarella</span>
-                <span id="editCherryTotal" style="font-size:0.8rem; color:#888;"></span>
+            {{-- CHERRY MOZZARELLA CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+                <span style="font-weight:600; color:#1a6b47; font-size:0.9rem;"><i class="fas fa-cheese"></i> Cherry Mozzarella</span>
+                <span id="editCherryTotal" style="font-size:0.78rem; color:#1a6b47; background:#e8f5e9; padding:3px 10px; border-radius:99px;"></span>
               </div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 @foreach($variants['Cherry Mozzarella'] ?? [] as $v)
-                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-                  <label style="font-size:0.75rem; font-weight:600; color:#555;">{{ $v->variant_name }}</label>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:3px; background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:8px 10px; min-width:60px;">
+                  <span style="font-size:0.7rem; font-weight:600; color:#555;">{{ $v->variant_name }}</span>
                   <input type="number" min="0" step="1" placeholder="0"
                     class="edit-cherry-input"
                     data-variant-id="{{ $v->id }}"
                     data-variant-name="{{ $v->variant_name }}"
                     data-weight="{{ $v->weight_grams }}"
-                    style="width:70px; padding:6px; border-radius:8px; border:1.5px solid #ccc; text-align:center; font-size:0.9rem;"
-                    oninput="calcEditTotal('cherry')" />
-                  <span style="font-size:0.7rem; color:#aaa;">pcs</span>
+                    style="width:52px; padding:4px; border:none; background:transparent; text-align:center; font-size:1rem; font-weight:600; color:#1a6b47;"
+                    oninput="calcEditTotal('cherry'); calcEditGrandTotal();" />
+                  <span style="font-size:0.65rem; color:#aaa;">pcs</span>
                 </div>
                 @endforeach
               </div>
             </div>
 
-            <hr style="margin:1rem 0;">
+            {{-- OTHER PRODUCTS CARD --}}
+            <div style="background:#f8faf9; border:1px solid #e0ece6; border-radius:10px; padding:1rem; margin-bottom:0.75rem;">
+              <span style="font-weight:600; color:#1a6b47; font-size:0.9rem; display:block; margin-bottom:0.75rem;"><i class="fas fa-cheese"></i> Other Products</span>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:10px 12px;">
+                  <span style="font-size:0.72rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">Mozzarella Log</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number" min="0" step="0.01" placeholder="0"
+                      id="editMozzaKgInput"
+                      data-variant-id="{{ $variants['Mozzarella Log'][0]->id ?? '' }}"
+                      style="flex:1; border:none; background:transparent; font-size:1rem; font-weight:600; color:#1a6b47; padding:0;"
+                      oninput="calcEditGrandTotal();" />
+                    <span style="font-size:0.72rem; color:#aaa;">kg</span>
+                  </div>
+                </div>
+                <div style="background:#fff; border:1px solid #dde8e2; border-radius:8px; padding:10px 12px;">
+                  <span style="font-size:0.72rem; font-weight:600; color:#555; display:block; margin-bottom:4px;">Provola</span>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="number" min="0" step="0.01" placeholder="0"
+                      id="editProvolaKgInput"
+                      data-variant-id="{{ $variants['Provola'][0]->id ?? '' }}"
+                      style="flex:1; border:none; background:transparent; font-size:1rem; font-weight:600; color:#1a6b47; padding:0;"
+                      oninput="calcEditGrandTotal();" />
+                    <span style="font-size:0.72rem; color:#aaa;">kg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            {{-- MOZZARELLA LOG & PROVOLA --}}
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-              <div class="form-group" style="margin:0;">
-                <label style="font-weight:700; color:#1a6b47;"><i class="fas fa-cheese"></i> Mozzarella Log (kg)</label>
-                <input type="number" min="0" step="0.01" placeholder="0"
-                  id="editMozzaKgInput"
-                  data-variant-id="{{ $variants['Mozzarella Log'][0]->id ?? '' }}"
-                  style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
-              </div>
-              <div class="form-group" style="margin:0;">
-                <label style="font-weight:700; color:#1a6b47;"><i class="fas fa-cheese"></i> Provola (kg)</label>
-                <input type="number" min="0" step="0.01" placeholder="0"
-                  id="editProvolaKgInput"
-                  data-variant-id="{{ $variants['Provola'][0]->id ?? '' }}"
-                  style="width:100%; padding:.6rem; border-radius:8px; border:1.5px solid #ccc;" />
-              </div>
+            {{-- GRAND TOTAL BAR --}}
+            <div style="background:#1a6b47; border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+              <span style="font-size:0.85rem; color:#a8d5b5; font-weight:500;">Total order weight</span>
+              <span id="editGrandTotalDisplay" style="font-size:1.2rem; font-weight:700; color:#fff;">0 kg</span>
             </div>
 
             {{-- HIDDEN ITEMS --}}
@@ -734,6 +801,14 @@
         const closeModal = (m) => { m?.classList.remove('active'); document.body.classList.remove('modal-open'); };
 
         setTimeout(() => document.getElementById('successAlert')?.remove(), 4000);
+        // Auto-submit orders filter
+const ordersForm = document.getElementById('ordersFilterForm');
+let ordersSearchTimer;
+document.getElementById('ordersSearch')?.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') { clearTimeout(ordersSearchTimer); ordersForm.submit(); }
+});
+document.getElementById('ordersDateFrom')?.addEventListener('change', () => ordersForm.submit());
+document.getElementById('ordersDateTo')?.addEventListener('change', () => ordersForm.submit());
         setTimeout(() => document.getElementById('errorAlert')?.remove(), 5000);
 
         // Client select auto-fill name
@@ -764,7 +839,18 @@
             totalKg += (pcs * weight) / 1000;
           });
           const span = document.getElementById(spanId);
-          if (span) span.textContent = totalKg > 0 ? `— Total: ${totalKg.toFixed(3)} kg` : '';
+          if (span) span.textContent = totalKg > 0 ? `${totalKg.toFixed(3)} kg` : '';
+        };
+
+        window.calcGrandTotal = function() {
+          let total = 0;
+          document.querySelectorAll('.burrata-input, .stracc-input, .cherry-input').forEach(inp => {
+            total += ((parseFloat(inp.value) || 0) * (parseFloat(inp.dataset.weight) || 0)) / 1000;
+          });
+          total += parseFloat(document.getElementById('mozzaKgInput')?.value) || 0;
+          total += parseFloat(document.getElementById('provolaKgInput')?.value) || 0;
+          const el = document.getElementById('grandTotalDisplay');
+          if (el) el.textContent = total > 0 ? `${total.toFixed(3)} kg` : '0 kg';
         };
 
         function buildRow(product = '', variantId = '', qty = '') {
@@ -847,6 +933,8 @@
           document.getElementById('cherryTotal').textContent = '';
           document.getElementById('step1').style.display = 'block';
           document.getElementById('step2').style.display = 'none';
+          const valMsg = document.getElementById('orderValidationMsg');
+          if (valMsg) valMsg.style.display = 'none';
           openModal(document.getElementById('createOrderModal'));
         });
 
@@ -885,15 +973,15 @@
 
           const validationMsg = document.getElementById('orderValidationMsg');
   if (!clientName) {
-    if (validationMsg) { validationMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please select a client.'; validationMsg.style.display = 'flex'; }
+    if (validationMsg) { document.getElementById('orderValidationText').textContent = 'Please select a client.'; validationMsg.style.display = 'block'; }
     return;
   }
   if (!orderDate) {
-    if (validationMsg) { validationMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please select an order date.'; validationMsg.style.display = 'flex'; }
+    if (validationMsg) { document.getElementById('orderValidationText').textContent = 'Please select an order date.'; validationMsg.style.display = 'block'; }
     return;
   }
   if (items.length === 0) {
-    if (validationMsg) { validationMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please add at least one product.'; validationMsg.style.display = 'flex'; }
+    if (validationMsg) { document.getElementById('orderValidationText').textContent = 'Please add at least one product quantity before previewing.'; validationMsg.style.display = 'block'; }
     return;
   }
   if (validationMsg) validationMsg.style.display = 'none';
@@ -978,7 +1066,7 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
         });
 
       // EDIT ORDER
-        window.calcEditTotal = function(product) {
+window.calcEditTotal = function(product) {
           const cls    = product === 'burrata' ? '.edit-burrata-input' : product === 'stracc' ? '.edit-stracc-input' : '.edit-cherry-input';
           const spanId = product === 'burrata' ? 'editBurrataTotal' : product === 'stracc' ? 'editStraccTotal' : 'editCherryTotal';
           let totalKg  = 0;
@@ -988,9 +1076,19 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
             totalKg += (pcs * weight) / 1000;
           });
           const span = document.getElementById(spanId);
-          if (span) span.textContent = totalKg > 0 ? `— Total: ${totalKg.toFixed(3)} kg` : '';
+          if (span) span.textContent = totalKg > 0 ? `${totalKg.toFixed(3)} kg` : '';
         };
 
+        window.calcEditGrandTotal = function() {
+          let total = 0;
+          document.querySelectorAll('.edit-burrata-input, .edit-stracc-input, .edit-cherry-input').forEach(inp => {
+            total += ((parseFloat(inp.value) || 0) * (parseFloat(inp.dataset.weight) || 0)) / 1000;
+          });
+          total += parseFloat(document.getElementById('editMozzaKgInput')?.value) || 0;
+          total += parseFloat(document.getElementById('editProvolaKgInput')?.value) || 0;
+          const el = document.getElementById('editGrandTotalDisplay');
+          if (el) el.textContent = total > 0 ? `${total.toFixed(3)} kg` : '0 kg';
+        };
         document.getElementById('editOrderForm')?.addEventListener('submit', function(e) {
           e.preventDefault();
           const hiddenDiv = document.getElementById('editOrderHiddenItems');
@@ -1042,16 +1140,18 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
           document.getElementById('editClientName').value  = btn.dataset.clientName;
             document.getElementById('editClientNameDisplay').textContent = btn.dataset.clientName;
             document.getElementById('editClientId').value    = btn.dataset.clientId;
-            document.getElementById('editOrderDate').value   = btn.dataset.orderDate;
+           document.getElementById('editOrderDate').value   = '{{ now()->format("Y-m-d") }}';
             document.getElementById('editOrderNotes').value  = btn.dataset.notes;
 
             // Reset all inputs
             document.querySelectorAll('.edit-burrata-input, .edit-stracc-input, .edit-cherry-input').forEach(inp => inp.value = '');
             document.getElementById('editMozzaKgInput').value = '';
             document.getElementById('editProvolaKgInput').value = '';
-            document.getElementById('editBurrataTotal').textContent = '';
+document.getElementById('editBurrataTotal').textContent = '';
             document.getElementById('editStraccTotal').textContent = '';
             document.getElementById('editCherryTotal').textContent = '';
+            const editGT = document.getElementById('editGrandTotalDisplay');
+            if (editGT) editGT.textContent = '0 kg';
 
           // Pre-fill existing quantities
             items.forEach(item => {
@@ -1071,6 +1171,7 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
             calcEditTotal('burrata');
             calcEditTotal('stracc');
             calcEditTotal('cherry');
+            calcEditGrandTotal();
             openModal(document.getElementById('editOrderModal'));
           });
         });
@@ -1086,7 +1187,7 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
             try {
             const itemsForPreview = items.map(item => ({
                 product: item.cheese_product,
-                variant_id: item.weight_grams,
+                variant_id: item.variant_id ?? item.weight_grams,
                 quantity_pcs: item.quantity_pieces,
                 total_kg: item.total_kg,
               }));
@@ -1123,13 +1224,16 @@ if (insuffWarn) insuffWarn.style.display = data.insufficient > 0 ? 'flex' : 'non
     <td style="text-align:center; padding:10px 14px;"><span class="status-tag ${ok ? 'active' : 'inactive'}">${ok ? 'OK' : 'Insufficient'}</span></td>
   </tr>`;
               });
-            document.getElementById('confirmInsufficientWarning').style.display = 'none';
-            document.getElementById('confirmStatusBtn').disabled = false;
-  document.getElementById('confirmStatusBtn').dataset.insufficient = data.insufficient;
-              document.getElementById('confirmStatusForm').action = `/orders/${orderId}/status`;
-              openModal(document.getElementById('confirmPreviewModal'));
+            const insuffWarnConfirm = document.getElementById('confirmInsufficientWarning');
+            if (insuffWarnConfirm) insuffWarnConfirm.style.display = 'none';
+            const confirmStatusBtn = document.getElementById('confirmStatusBtn');
+            if (confirmStatusBtn) { confirmStatusBtn.disabled = false; confirmStatusBtn.dataset.insufficient = data.insufficient; }
+            const confirmStatusForm = document.getElementById('confirmStatusForm');
+            if (confirmStatusForm) confirmStatusForm.action = `/orders/${orderId}/status`;
+            openModal(document.getElementById('confirmPreviewModal'));
             } catch (err) {
-              alert('Something went wrong.');
+              console.error('Confirm error:', err);
+              alert('Something went wrong: ' + err.message);
             }
           });
         });

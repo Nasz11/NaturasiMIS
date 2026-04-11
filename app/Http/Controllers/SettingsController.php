@@ -12,7 +12,18 @@ class SettingsController extends Controller
     public function index()
     {
         $settings = SystemSetting::instance();
-        return view('settings.index', compact('settings'));
+
+        try {
+            \DB::connection()->getPdo();
+            $dbStatus = true;
+        } catch (\Exception $e) {
+            $dbStatus = false;
+        }
+
+        $storageStatus = is_writable(storage_path('app'));
+        $systemStatus  = $dbStatus && $storageStatus;
+
+        return view('settings.index', compact('settings', 'dbStatus', 'storageStatus', 'systemStatus'));
     }
 
     public function updateSystem(Request $request)
@@ -59,6 +70,7 @@ class SettingsController extends Controller
 
         return back()->with('success', 'Password changed successfully.');
     }
+
     public function backup()
     {
         $dbName = env('DB_DATABASE');
@@ -73,32 +85,34 @@ class SettingsController extends Controller
         exec($command);
 
         if (file_exists($path)) {
+            session(['last_backup' => now()->format('F d, Y – h:i A')]);
             return response()->download($path, $filename)->deleteFileAfterSend(true);
         }
 
         return back()->with('error', 'Backup failed. Please try again.');
     }
+
     public function restore(Request $request)
-{
-    $request->validate([
-        'backup_file' => 'required|file|mimes:sql,txt',
-    ]);
+    {
+        $request->validate([
+            'backup_file' => 'required|file|mimes:sql,txt',
+        ]);
 
-    $file    = $request->file('backup_file');
-    $dbName  = env('DB_DATABASE');
-    $dbUser  = env('DB_USERNAME');
-    $dbPass  = env('DB_PASSWORD');
-    $dbHost  = env('DB_HOST');
-    $path    = $file->getPathname();
+        $file    = $request->file('backup_file');
+        $dbName  = env('DB_DATABASE');
+        $dbUser  = env('DB_USERNAME');
+        $dbPass  = env('DB_PASSWORD');
+        $dbHost  = env('DB_HOST');
+        $path    = $file->getPathname();
 
-    $command = "mysql --user={$dbUser} --password={$dbPass} --host={$dbHost} {$dbName} < \"{$path}\"";
-    exec($command, $output, $returnCode);
+        $command = "mysql --user={$dbUser} --password={$dbPass} --host={$dbHost} {$dbName} < \"{$path}\"";
+        exec($command, $output, $returnCode);
 
-    if ($returnCode === 0) {
-        ActivityLog::record('Settings', 'Restored Backup', 'Database restored from backup file.');
-        return back()->with('success', 'Database restored successfully.');
+        if ($returnCode === 0) {
+            ActivityLog::record('Settings', 'Restored Backup', 'Database restored from backup file.');
+            return back()->with('success', 'Database restored successfully.');
+        }
+
+        return back()->with('error', 'Restore failed. Please check your backup file.');
     }
-
-    return back()->with('error', 'Restore failed. Please check your backup file.');
 }
-}   
