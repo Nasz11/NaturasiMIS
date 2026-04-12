@@ -36,19 +36,26 @@ class InventoryController extends Controller
     $inboundMovements = InventoryMovement::with(['item', 'recordedBy'])
         ->where('type', 'inbound')
         ->whereDate('movement_date', $selectedDate)
-        ->orderByDesc('reference')
         ->orderByDesc('movement_date')
         ->get()
         ->groupBy('inventory_item_id');
+
+    $allInboundMovements = InventoryMovement::with(['item', 'recordedBy'])
+        ->where('type', 'inbound')
+        ->orderByDesc('movement_date')
+        ->get();
 
     $outboundMovements = InventoryMovement::with(['item', 'recordedBy'])
         ->where('type', 'outbound')
         ->whereDate('movement_date', $selectedDate)
-        ->orderByDesc('reference')
         ->orderByDesc('movement_date')
         ->get()
         ->groupBy('inventory_item_id');
 
+    $allOutboundMovements = InventoryMovement::with(['item', 'recordedBy'])
+        ->where('type', 'outbound')
+        ->orderByDesc('movement_date')
+        ->get();
     $leadTimeDays = 3;
     $lookbackDays = 30;
 
@@ -82,6 +89,7 @@ class InventoryController extends Controller
         'items', 'archivedItems',
         'date',
         'inboundMovements', 'outboundMovements',
+        'allInboundMovements', 'allOutboundMovements',
         'restockData'
     ));
 }

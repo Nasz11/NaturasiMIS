@@ -224,7 +224,7 @@ $status = $ending <= 0 ? 'Out of Stock' : ($ending <= $item->reorder_level ? 'Lo
           </tr>
         </thead>
         <tbody>
-          @forelse($inboundMovements->flatten() as $movement)
+          @forelse($allInboundMovements as $movement)
           <tr>
             <td>{{ \Carbon\Carbon::parse($movement->movement_date)->format('Y-m-d') }}</td>
             <td>{{ $movement->item->product_name }}</td>
@@ -279,7 +279,7 @@ $status = $ending <= 0 ? 'Out of Stock' : ($ending <= $item->reorder_level ? 'Lo
           </tr>
         </thead>
         <tbody>
-         @forelse($outboundMovements->flatten()->sortBy([['movement_date', 'desc'], ['reference', 'desc']]) as $movement)
+         @forelse($allOutboundMovements->sortByDesc('movement_date') as $movement)
           <tr>
             <td>{{ \Carbon\Carbon::parse($movement->movement_date)->format('Y-m-d') }}</td>
             <td>{{ $movement->item->product_name }}</td>

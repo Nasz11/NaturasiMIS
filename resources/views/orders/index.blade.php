@@ -1227,7 +1227,12 @@ document.getElementById('editBurrataTotal').textContent = '';
             const insuffWarnConfirm = document.getElementById('confirmInsufficientWarning');
             if (insuffWarnConfirm) insuffWarnConfirm.style.display = 'none';
             const confirmStatusBtn = document.getElementById('confirmStatusBtn');
-            if (confirmStatusBtn) { confirmStatusBtn.disabled = false; confirmStatusBtn.dataset.insufficient = data.insufficient; }
+            if (confirmStatusBtn) {
+              confirmStatusBtn.disabled = false;
+              confirmStatusBtn.style.opacity = '1';
+              confirmStatusBtn.style.cursor = 'pointer';
+              confirmStatusBtn.dataset.insufficient = data.insufficient;
+            }
             const confirmStatusForm = document.getElementById('confirmStatusForm');
             if (confirmStatusForm) confirmStatusForm.action = `/orders/${orderId}/status`;
             openModal(document.getElementById('confirmPreviewModal'));
@@ -1243,11 +1248,24 @@ document.getElementById('editBurrataTotal').textContent = '';
         document.getElementById('confirmStatusBtn')?.addEventListener('click', () => {
     const insufficient = parseInt(document.getElementById('confirmStatusBtn').dataset.insufficient) || 0;
     if (insufficient > 0) {
-      document.getElementById('confirmInsufficientWarning').style.display = 'flex';
+      // Collect the specific insufficient ingredient names from the table
+      const insufficientNames = [];
+      document.querySelectorAll('#confirmPreviewBody tr').forEach(row => {
+        const statusCell = row.querySelector('.status-tag.inactive');
+        if (statusCell) {
+          insufficientNames.push(row.querySelector('td').textContent.trim());
+        }
+      });
+      const msg = document.createElement('div');
+      msg.className = 'alert-message';
+      msg.style.cssText = 'position:fixed;top:1.5rem;right:1.5rem;z-index:999999;display:flex;align-items:center;gap:8px;max-width:380px;';
+      msg.innerHTML = `<i class="fas fa-exclamation-circle"></i> Insufficient ingredients: <strong>${insufficientNames.join(', ')}</strong>`;
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 5000);
       return;
     }
     document.getElementById('confirmStatusForm').submit();
-  }); 
+  });
 
         // ARCHIVE ORDER
         document.querySelectorAll('.archive-order-btn').forEach(btn => {
