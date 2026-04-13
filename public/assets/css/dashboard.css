@@ -2404,3 +2404,28 @@ body.theme-dark span[style*="background: #e0f7fa"] {
   background: #0f1e2a !important;
   color: #80deea !important;
 }
+
+/* Logout Modal Dark Mode */
+.theme-dark .logout-content {
+  background: #1e1e1e !important;
+  color: #f0f0f0 !important;
+}
+
+.theme-dark .logout-content h3 {
+  color: #f0f0f0 !important;
+}
+
+.theme-dark .logout-content p {
+  color: #aaa !important;
+}
+
+.theme-dark .cancel-btn {
+  background: #2e2e2e !important;
+  color: #ccc !important;
+  border: 1px solid #444 !important;
+}
+
+.theme-dark .cancel-btn:hover {
+  background: #3a3a3a !important;
+  color: #fff !important;
+}

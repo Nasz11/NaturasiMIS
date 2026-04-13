@@ -417,9 +417,7 @@ $status = $ending <= 0 ? 'Out of Stock' : ($ending <= $item->reorder_level ? 'Lo
      <input type="hidden" name="category" value="Raw Materials">
       <div class="form-group" style="grid-column: span 2;">
         <label>Product Name</label>
-        <select name="product_name" id="addProduct" required onchange="autoFillUnit('add')">
-          <option value="" disabled selected>Select a product</option>
-        </select>
+        <input type="text" name="product_name" id="addProduct" required placeholder="e.g. Fresh Milk" />
       </div>
       <div class="form-group">
         <label>Unit</label>
@@ -456,9 +454,8 @@ $status = $ending <= 0 ? 'Out of Stock' : ($ending <= $item->reorder_level ? 'Lo
      <input type="hidden" name="category" id="editCategory" value="Raw Materials">
       <div class="form-group" style="grid-column: span 2;">
         <label>Product Name</label>
-        <select name="product_name" id="editProduct" required onchange="autoFillUnit('edit')">
-          <option value="" disabled selected>Select a product</option>
-        </select>
+        <input type="text" name="product_name" id="editProduct" required readonly
+          style="background:#f5f5f5;color:#888;cursor:not-allowed;" />
       </div>
       <div class="form-group">
         <label>Unit</label>
