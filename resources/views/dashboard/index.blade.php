@@ -32,7 +32,11 @@
           </span>
         @endforeach
       </div>
-      <a href="{{ route('inventory.index') }}" style="font-size:0.78rem;color:#c62828;font-weight:700;white-space:nowrap;text-decoration:none;">View Inventory →</a>
+      @if(in_array('inventory', auth()->user()->allowedPages()))
+  <a href="{{ route('inventory.index') }}" style="font-size:0.78rem;color:#c62828;font-weight:700;white-space:nowrap;text-decoration:none;">View Inventory →</a>
+@else
+  <span style="font-size:0.78rem;color:#aaa;font-weight:600;white-space:nowrap;">View Inventory →</span>
+@endif
     </div>
    @endif
 
@@ -70,7 +74,11 @@
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
 
   {{-- Pending Orders --}}
-<a href="{{ route('orders.index') }}" class="dashboard-summary-card dashboard-summary-link" style="border-left:4px solid #f57c00;">
+  @if(in_array('orders', auth()->user()->allowedPages()))
+  <a href="{{ route('orders.index') }}" class="dashboard-summary-card dashboard-summary-link" style="border-left:4px solid #f57c00;">
+  @else
+  <div class="dashboard-summary-card" style="border-left:4px solid #f57c00;cursor:not-allowed;opacity:0.7;" onclick="showNoAccessToast()">
+  @endif
     <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
       <div style="background:#fff8e1; border-radius:10px; padding:0.6rem;">
         <i class="fas fa-clock" style="color:#f57c00;"></i>
@@ -81,28 +89,40 @@
       </div>
     </div>
     <span style="font-size:0.8rem; color:#f57c00; font-weight:600;">View Orders →</span>
-</a>
+  @if(in_array('orders', auth()->user()->allowedPages()))
+  </a>
+  @else
+  </div>
+  @endif
 
- {{-- Today's Orders --}}
- <a href="{{ route('orders.index') }}" class="dashboard-summary-card dashboard-summary-link" style="border-left:4px solid #1a6b47;">
-  <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
-    <div style="background:#e8f5e9; border-radius:10px; padding:0.6rem;">
-      <i class="fas fa-clipboard-check" style="color:#1a6b47;"></i>
+  {{-- Today's Orders --}}
+  @if(in_array('orders', auth()->user()->allowedPages()))
+  <a href="{{ route('orders.index') }}" class="dashboard-summary-card dashboard-summary-link" style="border-left:4px solid #1a6b47;">
+  @else
+  <div class="dashboard-summary-card" style="border-left:4px solid #1a6b47;cursor:not-allowed;opacity:0.7;" onclick="showNoAccessToast()">
+  @endif
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+      <div style="background:#e8f5e9; border-radius:10px; padding:0.6rem;">
+        <i class="fas fa-clipboard-check" style="color:#1a6b47;"></i>
+      </div>
+      <div>
+        <p style="margin:0; font-size:0.8rem; color:#888;">Today's Confirmed Orders</p>
+        <p style="margin:0; font-weight:700; font-size:1.3rem; color:#0e472d;">{{ $todayOrders->count() }} Order(s)</p>
+      </div>
     </div>
-    <div>
-      <p style="margin:0; font-size:0.8rem; color:#888;">Today's Confirmed Orders</p>
-      <p style="margin:0; font-weight:700; font-size:1.3rem; color:#0e472d;">{{ $todayOrders->count() }} Order(s)</p>
+    @forelse($todayOrders as $order)
+    <div class="dashboard-order-row">
+      <span style="font-size:0.85rem; font-weight:500; color:#333;">{{ $order->client_name }}</span>
+      <span class="status-tag {{ $order->status === 'Completed' ? 'completed' : 'active' }}" style="font-size:0.72rem; padding:3px 10px;">{{ $order->status }}</span>
     </div>
+    @empty
+    <p style="font-size:0.85rem; color:#aaa; margin:0;">No confirmed orders today.</p>
+    @endforelse
+  @if(in_array('orders', auth()->user()->allowedPages()))
+  </a>
+  @else
   </div>
-  @forelse($todayOrders as $order)
-  <div class="dashboard-order-row">
-    <span style="font-size:0.85rem; font-weight:500; color:#333;">{{ $order->client_name }}</span>
-    <span class="status-tag {{ $order->status === 'Completed' ? 'completed' : 'active' }}" style="font-size:0.72rem; padding:3px 10px;">{{ $order->status }}</span>
-  </div>
-  @empty
-  <p style="font-size:0.85rem; color:#aaa; margin:0;">No confirmed orders today.</p>
-  @endforelse
-</a>
+  @endif
 
 </div>
 
@@ -369,5 +389,16 @@
     todayOutputModal?.classList.add('active'));
   document.getElementById('closeTodayOutput')?.addEventListener('click', () =>
     todayOutputModal?.classList.remove('active'));
+
+  function showNoAccessToast() {
+    const existing = document.getElementById('noAccessToast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'noAccessToast';
+    toast.innerHTML = '<i class="fas fa-lock"></i> You don\'t have permission to access this page.';
+    toast.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#c62828;color:#fff;padding:0.75rem 1.5rem;border-radius:10px;font-size:0.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:9999;display:flex;align-items:center;gap:0.5rem;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
   </script>
   @endpush
