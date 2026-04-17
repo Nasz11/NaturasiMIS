@@ -2,9 +2,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InventoryItem extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'product_name', 'category', 'quantity',
         'unit', 'reorder_level', 'cost_per_unit',
