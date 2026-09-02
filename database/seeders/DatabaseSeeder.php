@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ── 1. USERS WITH STANDARDIZED DEMO ROLES ──────────────
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['username' => 'admin'],
             [
                 'email'    => 'admin@lactoflow.com',
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $productionUser = User::firstOrCreate(
+        $productionUser = User::updateOrCreate(
             ['username' => 'production'],
             [
                 'email'    => 'production@lactoflow.com',
@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $inventoryUser = User::firstOrCreate(
+        $inventoryUser = User::updateOrCreate(
             ['username' => 'inventory'],
             [
                 'email'    => 'inventory@lactoflow.com',
@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $managerUser = User::firstOrCreate(
+        $managerUser = User::updateOrCreate(
             ['username' => 'manager'],
             [
                 'email'    => 'manager@lactoflow.com',
@@ -101,7 +101,6 @@ class DatabaseSeeder extends Seeder
                     'inventory_item_id' => $item->id,
                     'type'              => 'inbound',
                     'quantity'          => $qty,
-                    'cost_per_unit'     => $cost,
                     'reference'         => 'INIT-STOCK-' . strtoupper(substr(md5($name), 0, 4)),
                     'remarks'           => 'Initial inventory replenishment',
                     'recorded_by'       => $inventoryUser->id,
@@ -181,9 +180,10 @@ class DatabaseSeeder extends Seeder
         ActivityLog::firstOrCreate(
             ['action' => 'System Seeded'],
             [
-                'module'      => 'System',
-                'description' => 'System successfully initialized with artisanal production configuration.',
-                'user_id'     => $admin->id,
+                'module'   => 'System',
+                'username' => 'admin',
+                'details'  => 'System successfully initialized with artisanal production configuration.',
+                'user_id'  => $admin->id,
             ]
         );
     }
