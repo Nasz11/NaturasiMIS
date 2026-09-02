@@ -113,22 +113,6 @@
           </div>
         </header>
 
-        {{-- Flash messages --}}
-      @if(session('success'))
-          <div class="success-message" id="globalSuccess">
-            <i class="fas fa-check-circle"></i>
-            <div>{{ session('success') }}</div>
-          </div>
-        @endif
-    @unless(View::hasSection('suppressGlobalErrors'))
-      @if($errors->any())
-          <div class="alert-message" id="globalError">
-            <i class="fas fa-exclamation-circle"></i>
-            <div>{{ $errors->first() }}</div>
-          </div>
-        @endif
-    @endunless
-
         @yield('content')
       </main>
     </div>
@@ -216,8 +200,67 @@
     {{-- MODALS FROM CHILD VIEWS --}}
     @stack('modals')
 
+    {{-- TOAST NOTIFICATION CONTAINER --}}
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
     {{-- SCRIPTS --}}
     <script src="{{ asset('assets/js/dashboard.js') }}"></script>
+
+    <script>
+    window.Toast = {
+      container: document.getElementById('toastContainer'),
+      show(type, title, message, duration = 4500) {
+        if (!this.container) return;
+
+        const icons = {
+          success: 'fas fa-check-circle',
+          error: 'fas fa-exclamation-circle',
+          warning: 'fas fa-exclamation-triangle',
+          info: 'fas fa-info-circle'
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+          <div class="toast-icon"><i class="${icons[type] || icons.info}"></i></div>
+          <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+          </div>
+          <button class="toast-close" onclick="this.closest('.toast').remove()">&times;</button>
+          <div class="toast-progress">
+            <div class="toast-progress-bar" style="animation-duration: ${duration}ms;"></div>
+          </div>
+        `;
+
+        this.container.appendChild(toast);
+
+        const timer = setTimeout(() => {
+          toast.classList.add('toast-hiding');
+          setTimeout(() => toast.remove(), 300);
+        }, duration);
+
+        toast.querySelector('.toast-close').addEventListener('click', () => clearTimeout(timer));
+      }
+    };
+
+    // Auto-trigger toasts from Laravel session flash messages
+    document.addEventListener('DOMContentLoaded', function() {
+      @if(session('success'))
+        Toast.show('success', 'Success', "{{ session('success') }}");
+      @endif
+
+      @if(session('error'))
+        Toast.show('error', 'Error', "{{ session('error') }}");
+      @endif
+
+      @unless(View::hasSection('suppressGlobalErrors'))
+        @if($errors->any())
+          Toast.show('error', 'Attention Required', "{{ $errors->first() }}");
+        @endif
+      @endunless
+    });
+    </script>
 
     <script>
     document.getElementById('profilePictureInput')?.addEventListener('change', function(e) {
@@ -246,13 +289,6 @@
           }
         });
       });
-    </script>
-  <script>
-      setTimeout(() => document.getElementById('globalSuccess')?.remove(), 4000);
-      setTimeout(() => document.getElementById('globalError')?.remove(), 5000);
-      setTimeout(() => {
-        document.querySelectorAll('.alert-message, .success-message, #errorAlert').forEach(el => el.remove());
-      }, 5000);
     </script>
     @stack('scripts')
 
