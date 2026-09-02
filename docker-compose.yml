@@ -3,12 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: naturasimis-app
+    container_name: lactoflow-app
     restart: unless-stopped
     ports:
       - "8000:80"
     environment:
-      APP_NAME: NaturasiMIS
+      APP_NAME: LactoFlow
       APP_ENV: local
       APP_KEY: base64:9aX3pC2F5e7T0bU6W8Q1M4kL7dE9rT2vY4uI6oP8sN0=
       APP_DEBUG: "true"
@@ -16,8 +16,8 @@ services:
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
-      DB_DATABASE: naturasi_mis
-      DB_USERNAME: naturasi_user
+      DB_DATABASE: lactoflow_db
+      DB_USERNAME: lactoflow_user
       DB_PASSWORD: secret_password
     depends_on:
       db:
@@ -29,11 +29,11 @@ services:
 
   db:
     image: mysql:8.0
-    container_name: naturasimis-db
+    container_name: lactoflow-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: naturasi_mis
-      MYSQL_USER: naturasi_user
+      MYSQL_DATABASE: lactoflow_db
+      MYSQL_USER: lactoflow_user
       MYSQL_PASSWORD: secret_password
       MYSQL_ROOT_PASSWORD: root_password
     ports:

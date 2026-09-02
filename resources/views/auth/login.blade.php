@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NaturasiMIS | Login</title>
+  <title>LactoFlow | Login</title>
   <link rel="icon" type="image/png" href="{{ asset('assets/images/naturasi-mis-logo.png') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet" />
@@ -58,8 +58,8 @@
   <section class="login-hero">
     <div class="overlay"></div>
     <div class="hero-content">
-      <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="NaturasiMIS" class="hero-logo">
-      <h1>Welcome to <span>NaturasiMIS</span></h1>
+      <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="LactoFlow" class="hero-logo">
+      <h1>Welcome to <span>LactoFlow</span></h1>
       <p>Smart Production & Inventory Monitoring<br>for Cheese Manufacturers</p>
     </div>
   </section>

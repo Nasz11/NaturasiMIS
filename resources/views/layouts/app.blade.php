@@ -1,9 +1,9 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>NaturasiMIS - @yield('title', 'Dashboard')</title>
+      <title>LactoFlow - @yield('title', 'Dashboard')</title>
       <meta name="csrf-token" content="{{ csrf_token() }}">
 
       <link rel="icon" type="image/png" href="{{ asset('assets/images/naturasi-mis-logo.png') }}" />
@@ -20,8 +20,8 @@
       {{-- SIDEBAR --}}
       <aside class="sidebar">
         <div class="logo">
-          <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="NaturasiMIS Logo" />
-          <h2>NaturasiMIS</h2>
+          <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="LactoFlow Logo" />
+          <h2>LactoFlow</h2>
         </div>
         <nav>
           <ul>

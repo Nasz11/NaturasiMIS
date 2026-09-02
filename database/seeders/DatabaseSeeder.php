@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['username' => 'admin'],
             [
-                'email'    => 'admin@naturasi.com',
+                'email'    => 'admin@lactoflow.com',
                 'password' => Hash::make('admin123'),
                 'role'     => 'admin',
                 'status'   => 'Active',
@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
         $productionUser = User::firstOrCreate(
             ['username' => 'production'],
             [
-                'email'    => 'production@naturasi.com',
+                'email'    => 'production@lactoflow.com',
                 'password' => Hash::make('prod123'),
                 'role'     => 'production',
                 'status'   => 'Active',
@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
         $inventoryUser = User::firstOrCreate(
             ['username' => 'inventory'],
             [
-                'email'    => 'inventory@naturasi.com',
+                'email'    => 'inventory@lactoflow.com',
                 'password' => Hash::make('inv123'),
                 'role'     => 'inventory',
                 'status'   => 'Active',
@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
         $managerUser = User::firstOrCreate(
             ['username' => 'manager'],
             [
-                'email'    => 'manager@naturasi.com',
+                'email'    => 'manager@lactoflow.com',
                 'password' => Hash::make('mgr123'),
                 'role'     => 'manager',
                 'status'   => 'Active',
@@ -62,7 +62,7 @@ class DatabaseSeeder extends Seeder
 
         // ── 2. SYSTEM SETTINGS ─────────────────────────────────
         SystemSetting::firstOrCreate(
-            ['company_name' => 'Naturasi Artisanal Cheese Co.'],
+            ['company_name' => 'LactoFlow Artisanal Dairy Co.'],
             [
                 'company_description' => 'Fine handcrafted Italian & European cheeses manufactured with precision.',
                 'theme'               => 'default',

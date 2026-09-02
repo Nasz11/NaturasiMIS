@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NaturasiMIS - Smart Inventory & Production Monitoring</title>
+  <title>LactoFlow - Smart Inventory & Production Monitoring</title>
   <link rel="icon" type="image/png" href="{{ asset('assets/images/naturasi-mis-logo.png') }}" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet" />
@@ -13,8 +13,8 @@
 
   <header class="top-nav">
     <div class="nav-logo">
-      <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="Naturasi Logo" />
-      <h1>Naturasi<span>MIS</span></h1>
+      <img src="{{ asset('assets/images/naturasi-mis-logo.png') }}" alt="LactoFlow Logo" />
+      <h1>Lacto<span>Flow</span></h1>
     </div>
     <nav>
       <ul class="nav-menu">
@@ -31,7 +31,7 @@
     <div class="hero-content">
       <h1 class="hero-title">Smart Production & Inventory Monitoring</h1>
       <p class="hero-subtitle">
-        Revolutionize cheese manufacturing efficiency with NaturasiMIS — your digital solution for
+        Revolutionize cheese manufacturing efficiency with LactoFlow — your digital platform for
         automated tracking, predictive restocking, and real-time production insights.
       </p>
       <div class="hero-cta">
@@ -42,9 +42,9 @@
   </section>
 
   <section id="about" class="about container">
-    <h2 class="section-title">About NaturasiMIS</h2>
+    <h2 class="section-title">About LactoFlow</h2>
     <p class="section-subtitle">
-      NaturasiMIS is a digital management system designed to streamline cheese production operations,
+      LactoFlow is a digital management system designed to streamline cheese production operations,
       automate inventory tracking, and enhance efficiency through predictive restocking and batch-level monitoring.
     </p>
     <div class="features-grid">
@@ -58,7 +58,7 @@
 
   <section id="benefits" class="benefits">
     <div class="container">
-      <h2 class="section-title">Why Choose NaturasiMIS?</h2>
+      <h2 class="section-title">Why Choose LactoFlow?</h2>
       <p class="section-subtitle">Designed to help cheese manufacturers save time, reduce errors, and make data-driven decisions.</p>
       <div class="features-grid">
         <div class="feature-card"><i class="ri-error-warning-line"></i><h3>Reduces Human Error</h3><p>Automated tracking minimizes manual mistakes.</p></div>
@@ -71,7 +71,7 @@
   </section>
 
   <footer class="footer">
-    <p>© {{ date('Y') }} NaturasiMIS – Developed for Naturasi Cheese Manufacturing</p>
+    <p>© {{ date('Y') }} LactoFlow – Handcrafted Cheese Production & Inventory ERP</p>
     <ul class="footer-links">
       <li><a href="#">Privacy Policy</a></li>
       <li><a href="#">Terms of Use</a></li>

@@ -1,12 +1,12 @@
-# 🧀 NaturasiMIS — Cheese Production & Inventory Management Information System
+# 🧀 LactoFlow — Artisanal Cheese Production & Inventory ERP
 
 [![Laravel 12](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![PHP 8.2+](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![MySQL](https://img.shields.io/badge/Database-MySQL%20%2F%20MariaDB-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
-[![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Docker](https://img.shields.io/badge/Container-Docker%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 [![Tests](https://img.shields.io/badge/Automated%20Tests-Passing-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)](#automated-testing)
 
-**NaturasiMIS** is an enterprise-grade Management Information System built for artisanal cheese manufacturers. It models domain-specific dairy operations—from milk yield calculations, batch sizing, aging/curing cycles, and multi-item purchase orders, to automated Bill of Materials (BOM) stock deductions and full audit trail logging.
+**LactoFlow** is an enterprise-grade Management Information System built for artisanal cheese manufacturers. It models domain-specific dairy operations—from milk yield calculations, batch sizing, aging/curing cycles, and multi-item purchase orders, to automated Bill of Materials (BOM) stock deductions and full audit trail logging.
 
 ---
 
@@ -67,7 +67,7 @@ For portfolio reviewers, the login screen includes **1-Click Demo Login** button
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/NaturasiMIS.git
+git clone https://github.com/Nasz11/NaturasiMIS.git
 cd NaturasiMIS
 
 # 2. Start containers (PHP 8.2 + Apache + MySQL)
@@ -90,7 +90,7 @@ docker compose exec app npm run build
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/your-username/NaturasiMIS.git
+git clone https://github.com/Nasz11/NaturasiMIS.git
 cd NaturasiMIS
 
 # 2. Install dependencies
